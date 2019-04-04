@@ -43,9 +43,9 @@ k4 = expr("all x. exists e. loc(e,rubicon) & ins(e,paddle) -> great(x)")#using p
 
 f1 = expr("all e. loc(e,forum) -> in(e, rome)")
 f2 = expr("all e. loc(e,rubicon) -> -in(e, rome)")
+f3 = expr("all e. stab(e,x,y) -> kill(e,x,y)")
 
-swk = [k1,k2,k3,k4,f1,f2]
-
+swk = [k1,k2,k3,k4,f1,f2,f3]
 
 quds = {
         "hang": expr("should_hang(brutus)"),
@@ -57,5 +57,12 @@ quds = {
 from comp_implt import *
 defense_belief = phrase([brutus, stab, caesar, rubicon, sword])
 
-defense_attorney = S(swk, defense_belief)
-defense_attorney.interject(last_statement_made, "hang")
+ex = phrase([brutus, row, knife]).L()
+
+print(ex)
+print(quds["lashed"])
+print("Test knife row: ", tpc(goal=quds["lashed"], assumptions=swk+[ex]).prove())
+
+defense_attorney = S(swk, defense_belief, quds, beliefs)
+defense_attorney.interject(last_statement_made, "lashed")
+

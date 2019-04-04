@@ -19,7 +19,7 @@ class L:
         self.wk = wk #shared world knowledge, list of expr
         self.B = B#belief set of speaker (for construction of belief prior)
         self.belief = belief#last statement made
-        
+
 
     @Marginal
     def L0(self, correction):
@@ -77,8 +77,10 @@ class S:
         print("debug: given_full_belief: ", given_full_belief.L())
         print("debug: self.wk: ", self.wk)
         
-        qudSelf = tpc(goal=self.QUDs[qud], assumptions=self.wk+[self.belief.L()]).prove(verbose=True) 
-        qudOther = tpc(goal=self.QUDs[qud], assumptions=self.wk+[given_full_belief.L()]).prove(verbose=True)
+        
+
+        qudSelf = tpc(goal=self.QUDs[qud], assumptions=self.wk+[self.belief.L()]).prove(verbose=False) 
+        qudOther = tpc(goal=self.QUDs[qud], assumptions=self.wk+[given_full_belief.L()]).prove(verbose=False)
         print("debug: qudSelf: ", qudSelf, " qudOther: ", qudOther)
         agree = qudSelf == qudOther
         print("agreement?",agree)

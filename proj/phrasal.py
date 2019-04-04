@@ -37,7 +37,7 @@ class phrase(Utt):
         for utt in utts:
             
             assert isinstance(utt,Utt) #java
-        self.str = " & ".join([utt.str for utt in utts])
+        self.str = "exists e."+" & ".join([utt.str for utt in utts])
         self.cost = sum([utt.cost for utt in utts])
     
         self.populate(utts)

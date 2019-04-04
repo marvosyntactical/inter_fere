@@ -47,7 +47,6 @@ f3 = expr("all e. stab(e,x,y) -> kill(e,x,y)")
 
 swk = [k1,k2,k3,k4,f1,f2,f3]
 
-
 quds = {
         "hang": expr("should_hang(brutus)"),
         "mean": expr("mean(brutus)"),
@@ -57,6 +56,9 @@ quds = {
 
 from comp_implt import *
 defense_belief = phrase([brutus, stab, caesar, rubicon, sword])
+
+
+print("Test knife row: ", tpc(goal=quds["lashed"], assumptions=swk+[phrase([brutus, row, knife])]))
 
 defense_attorney = S(swk, defense_belief, quds, beliefs)
 defense_attorney.interject(last_statement_made, "lashed")
