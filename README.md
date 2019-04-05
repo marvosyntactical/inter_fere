@@ -1,3 +1,5 @@
+This will one day be the github for my verb semantics project """Pragmatic Modelling of Ellipses Using First Order Logic Semantic Representations"""
+
 
 The below is taken from the [official pyro github examples](https://github.com/pyro-ppl/pyro/tree/dev/examples/rsa)
 
