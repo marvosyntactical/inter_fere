@@ -1,3 +1,6 @@
+
+The below is taken from the [official pyro github examples](https://github.com/pyro-ppl/pyro/tree/dev/examples/rsa)
+
 ## Rational Speech Acts (RSA) examples
 
 This folder contains examples of reasoning about reasoning with nested inference
