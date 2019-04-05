@@ -57,8 +57,25 @@ quds = {
 from comp_implt import *
 defense_belief = phrase([brutus, stab, caesar, rubicon, sword])
 
+teste = event("sleep", ["brutus"], c)
+testr = role("agn", "brutus",c)
+testp = phrase([testr, teste])
+print(testp)
 
-print("Test knife row: ", tpc(goal=quds["lashed"], assumptions=swk+[phrase([brutus, row, knife])]))
+testk1 = expr("exists e. sleep(e,x) & agn(e,x) -> inbed(x)")
+testg = expr("inbed(brutus)")
+print(testk1)
+print(testg)
+print("Test sleep: ", tpc(goal=testg, assumptions=[testp.L(),testk1]).prove(verbose=True))
+
+
+t1p = expr("dog(bello)")
+t1k1 = expr("all x.(dog(x) -> dumb(x))")
+t1g = expr("dumb(bello)")
+print(t1p, t1k1, t1g)
+print("Test pt1: ", tpc(goal=testg, assumptions=[t1p, t1k1]).prove(verbose=True))
+
+
 
 defense_attorney = S(swk, defense_belief, quds, beliefs)
 defense_attorney.interject(last_statement_made, "lashed")
