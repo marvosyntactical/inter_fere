@@ -56,26 +56,28 @@ quds = {
 
 from comp_implt import *
 defense_belief = phrase([brutus, stab, caesar, rubicon, sword])
-
+"""
 teste = event("sleep", ["brutus"], c)
 testr = role("agn", "brutus",c)
 testp = phrase([testr, teste])
 print(testp)
-
 testk1 = expr("exists e. sleep(e,x) & agn(e,x) -> inbed(x)")
 testg = expr("inbed(brutus)")
-print(testk1)
-print(testg)
-print("Test sleep: ", tpc(goal=testg, assumptions=[testp.L(),testk1]).prove(verbose=True))
+print("\n t-knowledge ",testk1)
+print("\n t-goal ",testg)
+print("\n t-proof ", tpc(goal=testg, assumptions=[testp.L(),testk1]).prove(verbose=True))
 
 
 t1p = expr("dog(bello)")
 t1k1 = expr("all x.(dog(x) -> dumb(x))")
 t1g = expr("dumb(bello)")
 print(t1p, t1k1, t1g)
-print("Test pt1: ", tpc(goal=testg, assumptions=[t1p, t1k1]).prove(verbose=True))
-
-
-
+print("Test pt1: ", tpc(goal=t1g, assumptions=[t1p, t1k1]).prove(verbose=True))
+"""
 defense_attorney = S(swk, defense_belief, quds, beliefs)
 defense_attorney.interject(last_statement_made, "lashed")
+
+#TODO
+#1) Phrasal proof funktioniert nicht
+#2) HashingMarginal Object umgehen (replace /make selfargs see through)
+#3) 

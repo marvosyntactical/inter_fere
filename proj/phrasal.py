@@ -35,8 +35,7 @@ class phrase(Utt):
     def __init__(self, utts):
         
         for utt in utts:
-            
-            assert isinstance(utt,Utt) #java
+           assert isinstance(utt,Utt) #java
         self.str = "exists e."+" & ".join([utt.str for utt in utts])
         self.cost = sum([utt.cost for utt in utts])
     
@@ -59,11 +58,18 @@ class phrase(Utt):
         for u in self.elems:
             if type(u) == event: r = True
         return r
+    def replace_constituents_in_utt(self, phrs_utterance):
+        consts = phrs_utterance.elems
+        incr_new = self
+        for c in consts:
+            incr_new = incr_new.replace_constituent_in_utt(c)
+        return incr_new
 
     def replace_constituent_in_utt(self, cons_utterance):
         #works for events and roles.. . . .. .
         #find role elem in elems with role.role == role
         #works on deepcopy of self and returns it !! ! !! ! 
+        print(cons_utterance, type(cons_utterance))
         f = cons_utterance.field
         proxy = copy.deepcopy(self)
         for elem in proxy.elems:
@@ -76,12 +82,10 @@ class phrase(Utt):
                 proxy.cost = sum([elem.cost for elem in self.elems])
         proxy.assign()
         return proxy
-               
-            
+        
     def sub_utterances(self):
         combs = []
         for m in range(1,len(self.elems)+1):
             combs += list(itertools.combinations(self.elems, m))
         return [phrase(su) for su in combs]
-
 
