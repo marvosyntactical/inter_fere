@@ -48,15 +48,16 @@ class HashingMarginal(dist.Distribution):
     over the return values of the TracePosterior's model.
     """
     def __init__(self, trace_dist, sites=None):
+        print("("*10+"HashingMarginal instantiated"+")"*10)
         assert isinstance(trace_dist, TracePosterior), \
             "trace_dist must be trace posterior distribution object"
-
+        
         if sites is None:
             sites = "_RETURN"
-
+        
         assert isinstance(sites, (str, list)), \
             "sites must be either '_RETURN' or list"
-
+        
         self.sites = sites
         super(HashingMarginal, self).__init__()
         self.trace_dist = trace_dist

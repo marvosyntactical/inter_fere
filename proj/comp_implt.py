@@ -24,17 +24,18 @@ class L:
         self.B = B#belief set of speaker (for construction of belief prior)
         self.belief = belief#last statement made
 
-
     @Marginal
     def L0(self, correction):
-        print("\\"*20+" literal listener "+"\\"*20)
+        print("\\"*20+" literal listener "+"\\"*20+"\n")
         #doesnt take into account own belief or qud, literally infers belief...by replacing subutterance
+        print("L0's belief: ", self.belief)
+        print("L0's B set of speaker: ", self.B) 
         interjector_belief=belief_prior(self.B)
         replacement = self.belief.replace_constituents_in_utt(correction)
         print("L0's replacement: ",replacement)
         evaluation = tpc(goal=interjector_belief.L(), assumptions=self.swk+[replacement.L()]).prove()
         factor("literal meaning", 0. if evaluation else -99999999.)#condition on s1 belief, correctly infers belief in basic scenario, how do i get blue ambiguity?
-        print("+"*20+ "    /listener   "+"\\"*20)
+        print("+"*20+ "    /listener   "+"\\"*20+"\n")
         return interjector_belief
     
     @Marginal
@@ -78,9 +79,7 @@ class S:
         
     @Marginal
     def interject(self, given_full_belief, qud):
-        #calc difference in roles
-        #now: Which are relevant to qud change -> evaluate
-        print("~"*20+"Speaker interject"+"~"*20)
+        print("~"*20+"Speaker interject"+"~"*20+"\n")
         print("\ndebug: speaker initialized,\n qud: "+ qud)
         print("\ndebug: self.belief.L(): ", self.belief.L())
         print("\ndebug: given_full_belief: ", given_full_belief.L())
@@ -90,28 +89,35 @@ class S:
         qudOther = tpc(goal=self.QUDs[qud], assumptions=self.swk+[given_full_belief.L()]).prove(verbose=False)
         print("\ndebug: qudSelf: ", qudSelf, " qudOther: ", qudOther)
         print("\nagreement?",qudSelf == qudOther)
-                
+
         alpha = 1.0
         with poutine.scale(scale=torch.tensor(alpha)):
             utterance = self.utterance_prior(given_full_belief)
-            #print(utterance)
             utt_no_infer = utterance[1]
             #Construct Listener in head
             listener = L(self.swk, self.B, given_full_belief)
-            literal_marginal = listener.L0(utt_no_infer)
-            
-            projected_literal = tpc(goal=self.QUDs[qud], assumptions=self.swk+[utt_no_infer]).prove()
+            literal_marginal = listener.L0(utt_no_infer)[0]
+            projected_literal = self.project(literal_marginal, qud, utt_no_infer.L())[0]
             pyro.sample("listener", projected_literal, obs=qudSelf)
-            
-            print("utterance")
-            print("#"*20+"   /Speaker  "+"#"*20)
+            print("#"*60)
+            print(str(utterance[1]))
+            print("#"*20+"   /Speaker  "+"#"*20+"\n")
+            print("#"*60)
         return utterance
 
-def belief_prior(B):
+    @Marginal
+    def project(self,dist,qud,expr):
+        #projection helper function so a hashingmarginal distribution can be used in interjection inference
+        v = pyro.sample("proj",dist)
+        return tpc(goal=self.QUDs[qud],assumptions=self.swk+[expr]).prove()
+
+
+def belief_prior(B): #over list
     ix = pyro.sample("belief", dist.Categorical(probs=torch.ones(len(B))/len(B)))
     return B[ix]
 
-def qud_prior(quds):
+
+def qud_prior(quds): #over dict
     values = list(quds.keys())
     ix = pyro.sample("qud", dist.Categorical(probs=torch.ones(len(values))/len(values)))
     qud = values[ix.item()]
