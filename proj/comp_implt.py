@@ -9,11 +9,19 @@ from phrasal import Utt, event, role, phrase
 from search_inference import factor, HashingMarginal, memoize, Search
 from functools import wraps
 
+"""
 def Marginal(fn):
     @wraps(fn)
     def shawarma(*args):
         return HashingMarginal(Search(fn).run(*args)), fn(*args)
     return memoize(shawarma)
+"""
+def Marginal(fn):
+    #uncomment to disable inference to debug other stuff
+    def rap(*args):
+        return dist.Categorical(probs=torch.ones(1)), fn(*args)
+    return rap
+
 
 expr = nltk.sem.Expression.fromstring
 tpc = TableauProverCommand
@@ -29,7 +37,7 @@ class L:
         print("\\"*20+" literal listener "+"\\"*20+"\n")
         #doesnt take into account own belief or qud, literally infers belief...by replacing subutterance
         print("L0's belief: ", self.belief)
-        print("L0's B set of speaker: ", self.B) 
+        print("L0's B set of speaker: ", [b.L() for b in self.B])
         interjector_belief=belief_prior(self.B)
         replacement = self.belief.replace_constituents_in_utt(correction)
         print("L0's replacement: ",replacement)
@@ -37,7 +45,7 @@ class L:
         factor("literal meaning", 0. if evaluation else -99999999.)#condition on s1 belief, correctly infers belief in basic scenario, how do i get blue ambiguity?
         print("+"*20+ "    /listener   "+"\\"*20+"\n")
         return interjector_belief
-    
+
     @Marginal
     def L1(self, correction, quds):
         """
@@ -57,13 +65,13 @@ class S:
     @Marginal
     def utterance_prior(self,given_full_belief):
         #why is my utterance prior a function of state ?????
-        both_assigned = list(set(self.belief.assed.keys()).intersection(set(given_full_belief.assed.keys())))
+        both_assigned = set(self.belief.assed.keys()).intersection(set(given_full_belief.assed.keys()))
         diff_roles = [] #differently assigned 
         for role in both_assigned:
             if self.belief.assed[role] != given_full_belief.assed[role]:
                 diff_roles.append(role)
         diff = []
-        for const in given_full_belief.elems:
+        for const in self.belief.elems:
             for r in diff_roles:
                 if const.field == r:
                     diff += [const]
@@ -73,19 +81,22 @@ class S:
         
         ix = pyro.sample("utterance",dist.Categorical(probs=torch.ones(len(possible_changers)) / len(possible_changers)))
         print("possible_changers, selection:")
-        print(possible_changers)
+        print([c.L() for c in possible_changers])
         print(possible_changers[ix])
         return possible_changers[ix]
         
     @Marginal
     def interject(self, given_full_belief, qud):
         print("~"*20+"Speaker interject"+"~"*20+"\n")
-        print("\ndebug: speaker initialized,\n qud: "+ qud)
+        print("\ndebug: speaker initialized")
+        print("qud: "+ qud)
+        print("meaning: ", self.QUDs[qud])
         print("\ndebug: self.belief.L(): ", self.belief.L())
         print("\ndebug: given_full_belief: ", given_full_belief.L())
         print("\ndebug: self.swk: ", self.swk)
         
         qudSelf = tpc(goal=self.QUDs[qud], assumptions=self.swk+[self.belief.L()]).prove(verbose=False) 
+        print("blub")
         qudOther = tpc(goal=self.QUDs[qud], assumptions=self.swk+[given_full_belief.L()]).prove(verbose=False)
         print("\ndebug: qudSelf: ", qudSelf, " qudOther: ", qudOther)
         print("\nagreement?",qudSelf == qudOther)
@@ -94,6 +105,7 @@ class S:
         with poutine.scale(scale=torch.tensor(alpha)):
             utterance = self.utterance_prior(given_full_belief)
             utt_no_infer = utterance[1]
+
             #Construct Listener in head
             listener = L(self.swk, self.B, given_full_belief)
             literal_marginal = listener.L0(utt_no_infer)[0]
