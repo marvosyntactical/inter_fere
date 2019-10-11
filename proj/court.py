@@ -1,9 +1,9 @@
 from phrasal import *
 import time
 import nltk
-#debug:
 import copy
 from nltk.inference import ResolutionProverCommand as rpc
+from comp_implt import *
 
 expr = nltk.sem.Expression.fromstring
 
@@ -58,7 +58,6 @@ quds = {
 }
 
 #debug from here
-from comp_implt import *
 
 defense_belief = phrase([brutus, stab, caesar, rubicon, sword])
 #defense_belief = last_statement_made #empty utterance?

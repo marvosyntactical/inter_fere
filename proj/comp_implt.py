@@ -1,5 +1,5 @@
 import nltk
-from nltk.inference import TableauProverCommand as tpc, ResolutionProverCommand as rpc
+from nltk.inference import ResolutionProverCommand as rpc
 
 import matplotlib.pyplot as plt
 import torch
@@ -15,7 +15,7 @@ from functools import wraps
 def Marginal(fn): #reduce max tries for debugging
     @wraps(fn)
     def shawarma(*args):
-        return HashingMarginal(Search(fn, max_tries=int(1e1)).run(*args)), fn(*args)
+        return HashingMarginal(Search(fn, max_tries=int(1e3)).run(*args))#, fn(*args)
     return memoize(shawarma)
 """
 def Marginal(fn):
@@ -57,6 +57,7 @@ class L:
 
     @Marginal
     def L1(self, correction, quds):
+
         """
         #infers belief of s1?
         #only really needs to infer the relevant change as in replacement suggested
@@ -71,7 +72,7 @@ class S:
         self.QUDs = QUDs
         self.B = B
 
-    @Marginal
+    #@Marginal
     def utterance_prior(self,given_full_belief):
         #why is my utterance prior a function of state ?????
         both_assigned = set(self.belief.assed.keys()).intersection(set(given_full_belief.assed.keys()))
@@ -105,7 +106,6 @@ class S:
         print("\ndebug: self.swk: ", self.swk)
 
         qudSelf = rpc(goal=self.QUDs[qud], assumptions=self.swk+[self.belief.L()]).prove(verbose=False) 
-        
         qudOther = rpc(goal=self.QUDs[qud], assumptions=self.swk+[given_full_belief.L()]).prove(verbose=False)
         print("\ndebug: qudSelf: ", qudSelf, " qudOther: ", qudOther)
         print("\nagreement?",qudSelf == qudOther)
@@ -114,24 +114,35 @@ class S:
         with poutine.scale(scale=torch.tensor(alpha)):
             utterance = self.utterance_prior(given_full_belief)
             print("interject utterance prior: ", utterance)
-            utt_no_infer = utterance[1]
 
             #Construct Listener in head
             listener = L(self.swk, self.B, given_full_belief)
-            literal_marginal = listener.L0(utt_no_infer)
-            projected_literal = self.project(literal_marginal[0], qud, utt_no_infer.L())
+            literal_marginal = listener.L0(utterance)
+            projected_literal = self.project(literal_marginal, qud)
             print("projected_literal: ", projected_literal)
-            pyro.sample("listener", projected_literal[0], obs=qudSelf)
+            pyro.sample("listener", projected_literal, obs=qudSelf)
             print("#"*20+" Speaker says: "+"#"*20+"\n")
-            print(str(utterance[1]))
+            print(str(utterance))
             print("#"*20+"   /Speaker  "+"#"*20+"\n")
             print("#"*60)
         return utterance
 
     @Marginal
-    def project(self,dist,qud,expr):
+    def project(self,dist,qud):
         #projection helper function so a hashingmarginal distribution can be used in interjection inference
-        v = pyro.sample("proj",dist)
+        v = pyro.sample("proj",dist) #im not even using this var yet
+        print("sampled v : ", v, type(v))
+        added_expression = [] if str(v) == NULL else [v.L()]
+        for elem in added_expression:
+            print(elem, type(elem))
+        return rpc(goal=self.QUDs[qud],assumptions=self.swk+added_expression).prove()
+
+
+    @Marginal
+    def project_old(self,dist,qud,expr):
+        #projection helper function so a hashingmarginal distribution can be used in interjection inference
+        v = pyro.sample("proj",dist) #im not even using this var yet
+        print("sampled v : ", v, type(v))
         added_expression = [] if str(expr) == NULL else [expr]
         return rpc(goal=self.QUDs[qud],assumptions=self.swk+added_expression).prove()
 
@@ -158,6 +169,8 @@ def plot_dist(d, output="output/distplot.png"):
     ax.bar(bins,data,width=width)
     ax.set_xticks(list(map(lambda x: x, range(1,len(data)+1))))
     ax.set_xticklabels(names,rotation=45, rotation_mode="anchor", ha="right")
+
+    plt.tight_layout()
     plt.savefig(output)
 
 
