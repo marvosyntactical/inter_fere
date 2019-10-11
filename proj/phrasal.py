@@ -6,13 +6,22 @@ expr = nltk.sem.Expression.fromstring
 
 inventory = {"ins","agn","pat","loc","thm","gol","ass"}
 
+NULL = "NULL"
 
 class Utt:
     def __str__(self):
         return self.str
-    
+
     def L(self):
         return expr(self.str)
+
+class NULL_Utt(Utt):
+    def __init__(self):
+        self.str = NULL
+        self.cost = 0
+        self.field = None
+        self.elems = {self}
+        self.assed = {"NULL": "NIL"}
 
 class event(Utt):
     def __init__(self, e, args, c):
@@ -38,27 +47,33 @@ class phrase(Utt):
            assert isinstance(utt,Utt) #java
         self.str = "exists e."+" & ".join([utt.str for utt in utts])
         self.cost = sum([utt.cost for utt in utts])
-    
+
         self.populate(utts)
         self.assign()
-    
-    
+
+
     def populate(self, utts):
         self.elems = set()
         for utt in utts:
             self.elems.update(utt.elems)
-        
+
     def assign(self):
         self.assed = dict()
         for utt in self.elems:
             self.assed.update(utt.assed)
-        
+
     def full_event_repr(self):
         r = False
         for u in self.elems:
             if type(u) == event: r = True
         return r
+
+
     def replace_constituents_in_utt(self, phrs_utterance):
+
+        if type(phrs_utterance) == NULL_Utt:
+            return self
+
         consts = phrs_utterance.elems
         incr_new = self
         for c in consts:
@@ -66,10 +81,12 @@ class phrase(Utt):
         return incr_new
 
     def replace_constituent_in_utt(self, cons_utterance):
+        #TODO handle empty expression
         #works for events and roles.. . . .. .
         #find role elem in elems with role.role == role
         #works on deepcopy of self and returns it !! ! !! ! 
-        print(cons_utterance, type(cons_utterance))
+        #print(cons_utterance, type(cons_utterance)
+
         f = cons_utterance.field
         proxy = copy.deepcopy(self)
         for elem in proxy.elems:
@@ -82,10 +99,12 @@ class phrase(Utt):
                 proxy.cost = sum([elem.cost for elem in self.elems])
         proxy.assign()
         return proxy
-        
+
+
     def sub_utterances(self):
         combs = []
         for m in range(1,len(self.elems)+1):
             combs += list(itertools.combinations(self.elems, m))
-        return [phrase(su) for su in combs]
+        #empty utterance as option:
+        return [phrase(su) for su in combs]+[NULL_Utt()]
 

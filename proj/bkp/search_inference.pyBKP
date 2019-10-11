@@ -30,8 +30,6 @@ def memoize(fn=None, **kwargs):
     return functools.lru_cache(**kwargs)(fn)
 
 
-
-
 def factor(name, value):
     """
     Like factor in webPPL, adds a scalar weight to the log-probability of the trace
@@ -50,16 +48,16 @@ class HashingMarginal(dist.Distribution):
     over the return values of the TracePosterior's model.
     """
     def __init__(self, trace_dist, sites=None):
-        #print("("*10+"HashingMarginal instantiated"+")"*10)
+        print("("*10+"HashingMarginal instantiated"+")"*10)
         assert isinstance(trace_dist, TracePosterior), \
             "trace_dist must be trace posterior distribution object"
-
+        
         if sites is None:
             sites = "_RETURN"
-
+        
         assert isinstance(sites, (str, list)), \
             "sites must be either '_RETURN' or list"
-
+        
         self.sites = sites
         super(HashingMarginal, self).__init__()
         self.trace_dist = trace_dist
@@ -112,15 +110,15 @@ class HashingMarginal(dist.Distribution):
             value_hash = hash(self._dict_to_tuple(val))
         else:
             value_hash = hash(val)
-
-        print("&"*10)
-        print("log_prob values in HashingMarginal:")
-        print("d: ", d)
-        print("values_map: ", [(h, str(v)) for h, v in values_map.items()])
-        print("val: ", val)
-        print("value_hash: ", value_hash)
-
-        return d.log_prob(torch.tensor([list(values_map.keys()).index(value_hash)]))
+        try:
+            return d.log_prob(torch.tensor([list(values_map.keys()).index(value_hash)]))
+        except ValueError:
+            print("ValueError caught in HashingMarginal, debug info: ")
+            print("d: ", d)
+            print("values_map: ", values_map)
+            print("val: ", val)
+            print("value_hash: ", value_hash)
+            exit()
 
 
     def enumerate_support(self):
@@ -177,32 +175,6 @@ class Search(TracePosterior):
         while not q.empty():
             tr = p.get_trace(*args, **kwargs)
             yield tr, tr.log_prob_sum()
-
-    def run(self, *args, **kwargs):
-        """
-        Calls `self._traces` to populate execution traces from a stochastic
-        Pyro model.
-
-        :param args: optional args taken by `self._traces`.
-        :param kwargs: optional keywords args taken by `self._traces`.
-        """
-        self._reset()
-        with poutine.block():
-            for i, vals in enumerate(self._traces(*args, **kwargs)):
-                if len(vals) == 2:
-                    chain_id = 0
-                    tr, logit = vals
-                else:
-                    tr, logit, chain_id = vals
-                    assert chain_id < self.num_chains
-                self.exec_traces.append(tr)
-                self.log_weights.append(logit)
-                self.chain_ids.append(chain_id)
-                self._idx_by_chain[chain_id].append(i)
-        self._categorical = dist.Categorical(logits=torch.tensor(self.log_weights))
-        print("\t\tthis Search.run() was for: ", self.model)
-        return self
-
 
 
 ###############################################
