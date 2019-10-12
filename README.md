@@ -61,6 +61,8 @@ Solution was to ditch the second return value, just memoize the hashingmarginal 
 1173 
 1174 Press ENTER or type command to continue
 ```
+# Lengthy section of research directions (```TODO``` in future)
+Clean thy code first
 
 
 The below is taken from the [official pyro github examples](https://github.com/pyro-ppl/pyro/tree/dev/examples/rsa)
