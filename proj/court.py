@@ -57,35 +57,9 @@ quds = {
         "great": expr("great(brutus)"),
 }
 
-#debug from here
 
 defense_belief = phrase([brutus, stab, caesar, rubicon, sword])
 #defense_belief = last_statement_made #empty utterance?
-
-def potenzmenge(l):
-    combs = []
-    for m in range(1, len(l)+1):
-        combs += list(itertools.combinations(l, m))
-    return combs
-
-print("Constructing Potenzmenge for swk...")
-pot = potenzmenge(swk)
-invariants = copy.deepcopy(swk)
-
-swk_str = "k1,k2,k3,k4,f1,f2,f3".split(",")
-
-print("\n\n\n"+"=== Utterance combination debug ==="+"\n\n\n")
-
-for combination in pot:
-    try:
-        defense_qud_self_ = rpc(goal=expr("should_be_lashed(brutus)"), assumptions=combination).prove()
-    except RecursionError:
-        print("Problematic combination of assumptions: "+ str([swk_str[i] if elem in combination else "  " for i, elem in enumerate(swk)]))
-        invariants = [elem for elem in invariants if elem in combination]
-print("Problematic invariants: "+str(invariants))
-print("If True after colon ignore the above problems: ", invariants == swk)
-print("\n\n\n"+"=== combo debug END END END ==="+"\n\n\n")
-
 
 #last_statement_made = phrase([brutus, stab, caesar, forum, knife])
 
@@ -94,13 +68,17 @@ t = time.time()
 plot_dist(defense_attorney.interject(last_statement_made, "hang"))
 print("interjection calc time: ", str(time.time()-t))
 
+prosecutor = L(swk, beliefs, last_statement_made, quds)
+prego_listener_dist = prosecutor.L1(phrase([rubicon]))
+
+plot_dist(prego_listener_dist, output="output/prego_listener.png")
+
 
 qudSelf = rpc(goal=quds["lashed"], assumptions=swk+[defense_belief.L()]).prove(verbose=False)
 print("qudSelf: ", qudSelf)
 exit()
 qudOther = rpc(goal=quds["lashed"], assumptions=swk+[last_statement_made.L()]).prove(verbose=False)
 print("qudOther: ", qudOther)
-#TODO
 #make production priors depend on utt cost
 #1) Phrasal proof funktioniert nicht
 #2) HashingMarginal Object umgehen (replace /make selfargs see through)

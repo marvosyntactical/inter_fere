@@ -12,27 +12,36 @@ from search_inference import factor, HashingMarginal, memoize, Search
 from functools import wraps
 
 
-def Marginal(fn): #reduce max tries for debugging
+def Marginal(fn):
     @wraps(fn)
     def shawarma(*args):
-        return HashingMarginal(Search(fn, max_tries=int(1e3)).run(*args))#, fn(*args)
+        return HashingMarginal(Search(fn, max_tries=int(1e3)).run(*args))
     return memoize(shawarma)
-"""
-def Marginal(fn):
-    #uncomment to disable inference to debug other stuff
-    def rap(*args):
-        return dist.Categorical(probs=torch.ones(1)), fn(*args)
-    return rap
-"""
+
 
 expr = nltk.sem.Expression.fromstring
 
 
 class L:
-    def __init__(self, wk, B, belief):
+    def __init__(self, wk, B, belief, QUDs):
+        """
+        Args:
+            wk: list of nltk.sem.Expression FOL predicates. This is the common world knowledge
+            of speaker and listener that both take the other to know
+            B: list of phrasal.phrase phrases. this list is the list of possible beliefs the
+            speaker might have about how the event under discussion went down.
+            belief: phrasal.phrase object indicating listener belief. In the example discussed, this
+            is equal to the last statement made upon which the speaker's correction calculation is
+            done
+            QUDs: dictionary with string keys and nltk.sem.Expression object values, holds questions
+            under discussion the speaker may be referring to
+        Returns:
+            self
+        """
         self.swk = wk #shared world knowledge, list of expr
         self.B = B#belief set of speaker (for construction of belief prior)
         self.belief = belief#self.belief == last_statement_made 
+        self.QUDs = QUDs
 
     @Marginal
     def L0(self, correction):
@@ -48,7 +57,7 @@ class L:
 
         if replacement == self.belief: #TODO test if this operation works
             evaluation = True
-        else: 
+        else:
             evaluation = rpc(goal=interjector_belief.L(), assumptions=self.swk+[replacement.L()]).prove()
 
         factor("literal meaning", 0. if evaluation else -99999999.)#condition on s1 belief, correctly infers belief in basic scenario, how do i get blue ambiguity?
@@ -56,14 +65,26 @@ class L:
         return interjector_belief
 
     @Marginal
-    def L1(self, correction, quds):
+    def L1(self, correction):
 
         """
         #infers belief of s1?
         #only really needs to infer the relevant change as in replacement suggested
         #in correction
         """
-        pass
+        print("µ"*20, " pragmatic listener calculation ", "µ"*20)
+        interjector_belief=belief_prior(self.B)
+        #^ convert back into phrase?
+        print("duck : ", interjector_belief, type(interjector_belief))
+        qud = qud_prior(self.QUDs)
+        speaker = S(self.swk, interjector_belief, self.QUDs, self.B)
+
+        #v below self belief == last_statement_made, once again
+        speaker_marginal = speaker.interject(self.belief, qud)
+
+        pyro.sample("speaker", speaker_marginal, obs=correction)
+        return interjector_belief
+
 
 class S:
     def __init__(self, swk, belief, QUDs, B):
@@ -72,9 +93,8 @@ class S:
         self.QUDs = QUDs
         self.B = B
 
-    #@Marginal
     def utterance_prior(self,given_full_belief):
-        #why is my utterance prior a function of state ?????
+        #My utterance prior is a function of speaker state
         both_assigned = set(self.belief.assed.keys()).intersection(set(given_full_belief.assed.keys()))
         diff_roles = [] #differently assigned 
         for role in both_assigned:
@@ -88,8 +108,9 @@ class S:
         d = phrase(diff) #difference in beliefs phrased fully
 
         possible_changers = d.sub_utterances()
-
-        ix = pyro.sample("utterance",dist.Categorical(probs=torch.ones(len(possible_changers)) / len(possible_changers)))
+        changerLogits = -torch.tensor([phr.cost for phr in possible_changers], dtype=torch.float64) 
+        ix = pyro.sample("utterance",dist.Categorical(logits=changerLogits))
+        print("changer logits: ", changerLogits)
         print("possible_changers:")
         print([c.L() for c in possible_changers])
         print(possible_changers[ix])
@@ -110,21 +131,21 @@ class S:
         print("\ndebug: qudSelf: ", qudSelf, " qudOther: ", qudOther)
         print("\nagreement?",qudSelf == qudOther)
 
-        alpha = 1.0
-        with poutine.scale(scale=torch.tensor(alpha)):
+        alpha = 1.
+        with poutine.scale(scale=torch.tensor(float(alpha))):
             utterance = self.utterance_prior(given_full_belief)
             print("interject utterance prior: ", utterance)
 
             #Construct Listener in head
-            listener = L(self.swk, self.B, given_full_belief)
+            listener = L(self.swk, self.B, given_full_belief, self.QUDs)
             literal_marginal = listener.L0(utterance)
             projected_literal = self.project(literal_marginal, qud)
             print("projected_literal: ", projected_literal)
             pyro.sample("listener", projected_literal, obs=qudSelf)
             print("#"*20+" Speaker says: "+"#"*20+"\n")
-            print(str(utterance))
+            print(str(utterance), type(utterance))
             print("#"*20+"   /Speaker  "+"#"*20+"\n")
-            print("#"*60)
+            print("~"*60)
         return utterance
 
     @Marginal
@@ -138,24 +159,15 @@ class S:
         return rpc(goal=self.QUDs[qud],assumptions=self.swk+added_expression).prove()
 
 
-    @Marginal
-    def project_old(self,dist,qud,expr):
-        #projection helper function so a hashingmarginal distribution can be used in interjection inference
-        v = pyro.sample("proj",dist) #im not even using this var yet
-        print("sampled v : ", v, type(v))
-        added_expression = [] if str(expr) == NULL else [expr]
-        return rpc(goal=self.QUDs[qud],assumptions=self.swk+added_expression).prove()
-
-
 def belief_prior(B): #over list
     ix = pyro.sample("belief", dist.Categorical(probs=torch.ones(len(B))/len(B)))
     return B[ix]
 
 
 def qud_prior(quds): #over dict
-    values = list(quds.keys())
-    ix = pyro.sample("qud", dist.Categorical(probs=torch.ones(len(values))/len(values)))
-    qud = values[ix.item()]
+    keys = list(quds.keys())
+    ix = pyro.sample("qud", dist.Categorical(probs=torch.ones(len(keys))/len(keys)))
+    qud = keys[ix.item()]
     return qud
 
 def plot_dist(d, output="output/distplot.png"):

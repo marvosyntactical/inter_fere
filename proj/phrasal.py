@@ -42,7 +42,7 @@ class role(Utt):
 
 class phrase(Utt):
     def __init__(self, utts):
-        
+
         for utt in utts:
            assert isinstance(utt,Utt) #java
         self.str = "exists e."+" & ".join([utt.str for utt in utts])
