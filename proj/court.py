@@ -31,7 +31,7 @@ someone_else = role("agn", "someone_else",c)
 #no belief may be subset of another belief
 beliefs = [
         phrase([brutus, stab, caesar, forum, knife]),#last statement made in ex
-        phrase([brutus, stab, caesar, rubicon, sword]),
+        phrase([brutus, stab, caesar, rubicon, sword]),#defense_belief 
         phrase([caesar_ag, stab, brutus_pat, forum, knife]),
         phrase([brutus, stab, caesar, rubicon, knife, fun]),
         phrase([brutus, stab, caesar, rubicon, sword, others, fun]),
@@ -57,9 +57,9 @@ quds = {
         "great": expr("great(brutus)"),
 }
 
-last_statement_made = phrase([brutus, stab, caesar, forum, knife])
+last_statement_made = beliefs[0]
 
-defense_belief = phrase([brutus, stab, caesar, rubicon, sword])
+correction = phrase([rubicon])
 
 qud = "hang"
 alpha = 1.
@@ -67,17 +67,19 @@ alpha = 1.
 TIME = helpers.Timer()
 P2F = helpers.ProfileToFile()
 
-defense_attorney = S(alpha, swk, beliefs, defense_belief, quds)
+defense_attorney = S(alpha, swk, beliefs, beliefs[1], quds)
 prosecutor = L(alpha, swk, beliefs, last_statement_made, quds)
 
 with P2F("s1 and l1 calculation times", f="stats/calc1.stats"):
 
+    lit_listener_dist = prosecutor.L0(correction)
+    plot_dist(lit_listener_dist, output="plots/lit_listener.png", addinfo="Lit. Listener distribution.\n\n- Correction: "+str(phrase([rubicon])))
+
+
     defense_attorney_dist = defense_attorney.interject(last_statement_made, qud)
     plot_dist(defense_attorney_dist,
-          output="plots/prag_speaker.png",addinfo="Speaker distribution.\n\n\t"+"Speaker event belief: "+str(defense_belief)+"\n\t"+str(quds[qud])+"\n\talpha = "+str(alpha))
+          output="plots/prag_speaker.png",addinfo="Speaker distribution.\n\n- "+"Speaker event belief: "+str(beliefs[1])+"\n- "+"QUD: "+str(quds[qud])+"\n- alpha = "+str(alpha))
 
-
-
-    prag_listener_dist = prosecutor.L1(phrase([rubicon]))
-    plot_dist(prag_listener_dist, output="plots/prag_listener.png", addinfo="Listener distribution.\n\n\t"+str(phrase([rubicon]))+"\n\talpha = "+str(alpha))
+    prag_listener_dist = prosecutor.L1(correction)
+    plot_dist(prag_listener_dist, output="plots/prag_listener.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(phrase([rubicon]))+"\n- alpha = "+str(alpha))
 

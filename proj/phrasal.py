@@ -18,7 +18,7 @@ class Utt:
 class NULL_Utt(Utt):
     def __init__(self):
         self.str = NULL
-        self.cost = 0
+        self.cost = 50.#finetune manually? for sensible model, probably 0<c<1
         self.field = None
         self.elems = {self}
         self.assed = {"NULL": "NIL"}
@@ -81,11 +81,10 @@ class phrase(Utt):
         return incr_new
 
     def replace_constituent_in_utt(self, cons_utterance):
-        #TODO handle empty expression
-        #works for events and roles.. . . .. .
-        #find role elem in elems with role.role == role
-        #works on deepcopy of self and returns it !! ! !! ! 
-        #print(cons_utterance, type(cons_utterance)
+        """
+        find role elem in elems with role.role == role
+        works on deepcopy of self and returns it !! ! !! ! 
+        """
 
         f = cons_utterance.field
         proxy = copy.deepcopy(self)
@@ -93,8 +92,6 @@ class phrase(Utt):
             if (type(elem) == role and elem.field == f) or (type(elem)==event and elem.field == f):
                 proxy.elems.remove(elem)
                 proxy.elems.add(cons_utterance)
-                #ugly
-                #repl role in str
                 proxy.str = proxy.str.replace(elem.str, cons_utterance.str)
                 proxy.cost = sum([elem.cost for elem in self.elems])
         proxy.assign()
