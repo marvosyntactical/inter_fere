@@ -23,9 +23,11 @@ expr = nltk.sem.Expression.fromstring
 
 
 class L:
-    def __init__(self, wk, B, belief, QUDs):
+    def __init__(self,s1_alpha, swk, B, belief, QUDs):
         """
         Args:
+            s1_alpha: speaker optimality to be assumed by L1. Replace with prior over possible
+            optimalities once inference works
             wk: list of nltk.sem.Expression FOL predicates. This is the common world knowledge
             of speaker and listener that both take the other to know
             B: list of phrasal.phrase phrases. this list is the list of possible beliefs the
@@ -38,13 +40,17 @@ class L:
         Returns:
             self
         """
-        self.swk = wk #shared world knowledge, list of expr
+        self.s1_alpha = s1_alpha
+        self.swk = swk #shared world knowledge, list of expr
         self.B = B#belief set of speaker (for construction of belief prior)
         self.belief = belief#self.belief == last_statement_made 
         self.QUDs = QUDs
 
     @Marginal
     def L0(self, correction):
+        """
+
+        """
         print("\\"*20+" literal listener "+"\\"*20+"\n")
         #doesnt take into account own belief or qud, literally infers belief...by replacing subutterance
         print("L0's belief: ", self.belief)
@@ -68,7 +74,7 @@ class L:
     def L1(self, correction):
 
         """
-        #infers belief of s1?
+        #infers belief of s1
         #only really needs to infer the relevant change as in replacement suggested
         #in correction
         """
@@ -77,21 +83,23 @@ class L:
         #^ convert back into phrase?
         print("duck : ", interjector_belief, type(interjector_belief))
         qud = qud_prior(self.QUDs)
-        speaker = S(self.swk, interjector_belief, self.QUDs, self.B)
+        speaker = S(self.s1_alpha, self.swk, self.B, interjector_belief, self.QUDs)
 
         #v below self belief == last_statement_made, once again
         speaker_marginal = speaker.interject(self.belief, qud)
 
         pyro.sample("speaker", speaker_marginal, obs=correction)
+        print("µ"*20, " pragmatic listener infers: ", interjector_belief, " ", "µ"*20)
         return interjector_belief
 
 
 class S:
-    def __init__(self, swk, belief, QUDs, B):
+    def __init__(self, alpha, swk, B, belief, QUDs):
+        self.alpha = alpha
         self.swk = swk
+        self.B = B
         self.belief = belief
         self.QUDs = QUDs
-        self.B = B
 
     def utterance_prior(self,given_full_belief):
         #My utterance prior is a function of speaker state
@@ -131,13 +139,12 @@ class S:
         print("\ndebug: qudSelf: ", qudSelf, " qudOther: ", qudOther)
         print("\nagreement?",qudSelf == qudOther)
 
-        alpha = 1.
-        with poutine.scale(scale=torch.tensor(float(alpha))):
+        with poutine.scale(scale=torch.tensor(float(self.alpha))):
             utterance = self.utterance_prior(given_full_belief)
             print("interject utterance prior: ", utterance)
 
             #Construct Listener in head
-            listener = L(self.swk, self.B, given_full_belief, self.QUDs)
+            listener = L(self.alpha, self.swk, self.B, given_full_belief, self.QUDs)
             literal_marginal = listener.L0(utterance)
             projected_literal = self.project(literal_marginal, qud)
             print("projected_literal: ", projected_literal)
@@ -151,7 +158,7 @@ class S:
     @Marginal
     def project(self,dist,qud):
         #projection helper function so a hashingmarginal distribution can be used in interjection inference
-        v = pyro.sample("proj",dist) #im not even using this var yet
+        v = pyro.sample("proj",dist)
         print("sampled v : ", v, type(v))
         added_expression = [] if str(v) == NULL else [v.L()]
         for elem in added_expression:
@@ -170,7 +177,7 @@ def qud_prior(quds): #over dict
     qud = keys[ix.item()]
     return qud
 
-def plot_dist(d, output="output/distplot.png"):
+def plot_dist(d, output="plots/distplot.png", addinfo=None):
     support = d.enumerate_support()
     data = [d.log_prob(s).exp().item() for s in d.enumerate_support()]
     names = support
@@ -180,9 +187,13 @@ def plot_dist(d, output="output/distplot.png"):
     bins = list(map(lambda x: x-width/2,range(1,len(data)+1)))
     ax.bar(bins,data,width=width)
     ax.set_xticks(list(map(lambda x: x, range(1,len(data)+1))))
-    ax.set_xticklabels(names,rotation=45, rotation_mode="anchor", ha="right")
+    ax.set_xticklabels(names,rotation=20, rotation_mode="anchor", ha="right")
+
+    if type(addinfo)==str:
+        plt.figtext(.1,.1, addinfo)
 
     plt.tight_layout()
+
     plt.savefig(output)
 
 

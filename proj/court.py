@@ -4,6 +4,7 @@ import nltk
 import copy
 from nltk.inference import ResolutionProverCommand as rpc
 from comp_implt import *
+import helpers
 
 expr = nltk.sem.Expression.fromstring
 
@@ -25,12 +26,11 @@ caesar_ag = role("agn", "caesar", c)
 brutus_pat = role("pat", "brutus", c)
 someone_else = role("agn", "someone_else",c)
 
-last_statement_made = phrase([brutus, stab, caesar, forum, knife])
 
 #how did it all happen??!?!?!
 #no belief may be subset of another belief
 beliefs = [
-        last_statement_made,
+        phrase([brutus, stab, caesar, forum, knife]),#last statement made in ex
         phrase([brutus, stab, caesar, rubicon, sword]),
         phrase([caesar_ag, stab, brutus_pat, forum, knife]),
         phrase([brutus, stab, caesar, rubicon, knife, fun]),
@@ -57,29 +57,27 @@ quds = {
         "great": expr("great(brutus)"),
 }
 
+last_statement_made = phrase([brutus, stab, caesar, forum, knife])
 
 defense_belief = phrase([brutus, stab, caesar, rubicon, sword])
-#defense_belief = last_statement_made #empty utterance?
 
-#last_statement_made = phrase([brutus, stab, caesar, forum, knife])
+qud = "hang"
+alpha = 1.
 
-defense_attorney = S(swk, defense_belief, quds, beliefs)
-t = time.time()
-plot_dist(defense_attorney.interject(last_statement_made, "hang"))
-print("interjection calc time: ", str(time.time()-t))
+TIME = helpers.Timer()
+P2F = helpers.ProfileToFile()
 
-prosecutor = L(swk, beliefs, last_statement_made, quds)
-prego_listener_dist = prosecutor.L1(phrase([rubicon]))
+defense_attorney = S(alpha, swk, beliefs, defense_belief, quds)
+prosecutor = L(alpha, swk, beliefs, last_statement_made, quds)
 
-plot_dist(prego_listener_dist, output="output/prego_listener.png")
+with P2F("s1 and l1 calculation times", f="stats/calc1.stats"):
+
+    defense_attorney_dist = defense_attorney.interject(last_statement_made, qud)
+    plot_dist(defense_attorney_dist,
+          output="plots/prag_speaker.png",addinfo="Speaker distribution.\n\n\t"+"Speaker event belief: "+str(defense_belief)+"\n\t"+str(quds[qud])+"\n\talpha = "+str(alpha))
 
 
-qudSelf = rpc(goal=quds["lashed"], assumptions=swk+[defense_belief.L()]).prove(verbose=False)
-print("qudSelf: ", qudSelf)
-exit()
-qudOther = rpc(goal=quds["lashed"], assumptions=swk+[last_statement_made.L()]).prove(verbose=False)
-print("qudOther: ", qudOther)
-#make production priors depend on utt cost
-#1) Phrasal proof funktioniert nicht
-#2) HashingMarginal Object umgehen (replace /make selfargs see through)
-#3) infinite loop because ###
+
+    prag_listener_dist = prosecutor.L1(phrase([rubicon]))
+    plot_dist(prag_listener_dist, output="plots/prag_listener.png", addinfo="Listener distribution.\n\n\t"+str(phrase([rubicon]))+"\n\talpha = "+str(alpha))
+

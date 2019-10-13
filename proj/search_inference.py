@@ -104,8 +104,6 @@ class HashingMarginal(dist.Distribution):
 
     def log_prob(self, val):
         d, values_map = self._dist_and_values()
-        print("current self distribution?", d)
-        print("current values map?", values_map)
         if torch.is_tensor(val):
             value_hash = hash(val.cpu().contiguous().numpy().tobytes())
         elif isinstance(val, dict):
@@ -113,6 +111,9 @@ class HashingMarginal(dist.Distribution):
         else:
             value_hash = hash(val)
 
+        print("current self trace_dist model?", self.trace_dist.model)
+        print("current self distribution?", d)
+        print("current values map?", values_map)
         print("&"*10)
         print("log_prob values in HashingMarginal:")
         print("d: ", d)
