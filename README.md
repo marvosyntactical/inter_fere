@@ -1,19 +1,33 @@
-This will one day be the github for my verb semantics project 
 
-**Pragmatic Modelling of Ellipses Using First Order Logic Semantic Representations**
+
+# Pragmatic Modelling of Ellipses Using First Order Logic Semantic Representations
 
 # ```TODO``` October 31 is deadline
 
-#### Fix memoize for multiple return values of inner function: at the moment; memoize doesnt seem to work for precomputed values, possible fixes: 
-1. find out how to **memoize one return value, but not the other** (this probably means still computing the second return value every time which Im trying to avoid in the first place
-2. ditch second return value and find out how to extract the utterance from value map, use this in reasoning
+##  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Non Bug TODOs ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#### NULL\_Utt
+- clean code
+- plot speaker, pragmatic listener for example used in paper
+- experiment with cost term values; determine auto?
+- run experiments with arbitrary formulae in SWK, beliefs, quds, i.e. generate automatically with abstract variables
+- write speaker non interject function; generalize to dialogue --> future research
+- finish paper
+
+
+##  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Bugs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#### Fix memoize for multiple return values of inner function: at the moment; memoize doesnt seem to work for precomputed values, possible fixes: ☑ 
+1. find out how to **memoize one return value, but not the other** (this probably means still computing the second return value every time which Im trying to avoid in the first place
+2. ditch second return value and find out how to extract the utterance from value map, use this in reasoning ☑ 
+Solution was to ditch the second return value, just memoize the hashingmarginal and fix utterance prior to not be a marginal function, everything else doesnt even need the logical form
+
+#### NULL\_Utt ☑ 
 - seems to work fine for the moment
 
 #### Value Error in HashingMarginal.log\_probs\(\)
-- happens when speaker belief is identical to previous utterance and null utterance should be produced
-- something thats not speaker project, I get a Value Error in log\_prob because 1, True was not seen prior by the trace
+- happens ~~when speaker belief is identical to previous utterance and null utterance should be produced~~ also happens other times
+- probably caused by search run max tries number too low and hashingmarginal not having seen something it should have before;
+- -> **MOVING TO CLUSTER** running with high search tries, .5 alpha so every option should be encountered during mcmc
 - The error looks as follows:
 ```python3
 1134 current self distribution? Categorical(logits: torch.Size([1]))
@@ -58,6 +72,8 @@ This will one day be the github for my verb semantics project
 1173 
 1174 Press ENTER or type command to continue
 ```
+# Lengthy section of research directions (```TODO``` in future)
+Clean thy code first
 
 
 The below is taken from the [official pyro github examples](https://github.com/pyro-ppl/pyro/tree/dev/examples/rsa)
