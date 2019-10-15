@@ -58,11 +58,14 @@ class L:
         interjector_belief=belief_prior(self.B) #state_prior() in RSAhyperb
         replacement = self.belief.replace_constituents_in_utt(correction)
         print("L0's replacement: ",replacement)
-
-        if replacement == self.belief: #TODO test if this works
-            evaluation = True
-        else: #bug here or in speaker project afaik #lit plot shows no interp
-            evaluation = rpc(goal=interjector_belief.L(), assumptions=self.swk+[replacement.L()]).prove()
+        print("L0's sampled interj belief: ", interjector_belief)
+        evaluation = rpc(goal=interjector_belief.L(), assumptions=self.swk+[replacement.L()]).prove()
+        #^the above doesnt prove interj belief based on replacement unless
+        #replacement == interj belief
+        #cannot make soft inference
+        print("L0's evaluation: ", evaluation)
+        #solution: sample from inventory of extra roles and replace in replacement stochastically
+        #so evaluation was always false unless null utterance was checked 
 
         factor("literal meaning", 0. if evaluation else -99999999.)#condition on s1 belief, correctly infers belief in basic scenario, how do i get blue ambiguity?
         print("+"*20+ "    /listener   "+"\\"*20+"\n")
@@ -194,7 +197,7 @@ class S:
         """
         v = pyro.sample("proj",dist)
         print("sampled v : ", v, type(v))
-        qud_interp = rpc(goal=self.QUDs[qud],assumptions=self.swk+[v]).prove()
+        qud_interp = rpc(goal=self.QUDs[qud],assumptions=self.swk+[v.L()]).prove()
 
         return qud_interp
 

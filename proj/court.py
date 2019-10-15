@@ -57,6 +57,7 @@ quds = {
         "great": expr("great(brutus)"),
 }
 
+defense_belief = beliefs[1]
 last_statement_made = beliefs[0]
 
 correction = phrase([rubicon])
@@ -67,10 +68,10 @@ alpha = 1.
 TIME = helpers.Timer()
 P2F = helpers.ProfileToFile()
 
-defense_attorney = S(alpha, swk, beliefs, beliefs[1], quds)
+defense_attorney = S(alpha, swk, beliefs, defense_belief, quds)
 prosecutor = L(alpha, swk, beliefs, last_statement_made, quds)
 
-with P2F("s1 and l1 calculation times", f="stats/calc1.stats"):
+with TIME("s1 and l1 calculation"):
 
     lit_listener_dist = prosecutor.L0(correction)
     plot_dist(lit_listener_dist, output="plots/lit_listener.png", addinfo="Lit. Listener distribution.\n\n- Correction: "+str(phrase([rubicon])))
