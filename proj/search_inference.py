@@ -23,6 +23,8 @@ if six.PY3:
 else:
     import functools32 as functools
 
+global search_runs
+search_runs=[]
 
 def memoize(fn=None, **kwargs):
     if fn is None:
@@ -50,7 +52,9 @@ class HashingMarginal(dist.Distribution):
     over the return values of the TracePosterior's model.
     """
     def __init__(self, trace_dist, sites=None):
-        #print("("*10+"HashingMarginal instantiated"+")"*10)
+        print("HashingMarginal instantiated for trace_dist")
+        print("trace_dist: ", trace_dist)
+        print("sites: ", sites)
         assert isinstance(trace_dist, TracePosterior), \
             "trace_dist must be trace posterior distribution object"
 
@@ -113,15 +117,21 @@ class HashingMarginal(dist.Distribution):
 
         print("current self trace_dist model?", self.trace_dist.model)
         print("current self distribution?", d)
-        print("current values map?", values_map)
         print("&"*10)
         print("log_prob values in HashingMarginal:")
         print("d: ", d)
-        print("values_map: ", [(h, str(v)) for h, v in values_map.items()])
+        print("values_map: ", [(h, v.cost) if type(v) != type(True) else (h, v) for h, v in values_map.items()])
         print("val: ", val)
         print("value_hash: ", value_hash)
 
-        return d.log_prob(torch.tensor([list(values_map.keys()).index(value_hash)]))
+        try:
+            return d.log_prob(torch.tensor([list(values_map.keys()).index(value_hash)]))
+        except ValueError as e:
+            print(e)
+            print("missing val ", val)
+            print("from last search run of: ")
+            print(search_runs)
+            raise e
 
 
     def enumerate_support(self):
@@ -201,7 +211,8 @@ class Search(TracePosterior):
                 self.chain_ids.append(chain_id)
                 self._idx_by_chain[chain_id].append(i)
         self._categorical = dist.Categorical(logits=torch.tensor(self.log_weights))
-        print("\t\tthis Search.run() was for: ", self.model)
+        print("\tthis Search.run() was for: ", self.model)
+        search_runs.append(((self.model), len(self.exec_traces)))
         return self
 
 

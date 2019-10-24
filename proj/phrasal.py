@@ -18,7 +18,7 @@ class Utt:
 class NULL_Utt(Utt):
     def __init__(self):
         self.str = NULL
-        self.cost = 50.#finetune manually? for sensible model, probably 0<c<1
+        self.cost = .5#finetune manually? for sensible model, probably 0<c<1
         self.field = None
         self.elems = {self}
         self.assed = {"NULL": "NIL"}
@@ -44,7 +44,7 @@ class phrase(Utt):
     def __init__(self, utts):
 
         for utt in utts:
-           assert isinstance(utt,Utt) #java
+           assert isinstance(utt,Utt)
         self.str = "exists e."+" & ".join([utt.str for utt in utts])
         self.cost = sum([utt.cost for utt in utts])
 
@@ -102,6 +102,6 @@ class phrase(Utt):
         combs = []
         for m in range(1,len(self.elems)+1):
             combs += list(itertools.combinations(self.elems, m))
-        #empty utterance as option:
+        #empty utterance as option
         return [phrase(su) for su in combs]+[NULL_Utt()]
 

@@ -1,23 +1,11 @@
-import nltk
-from nltk.inference import ResolutionProverCommand as rpc
-
-import matplotlib.pyplot as plt
 import torch
 import pyro
 import pyro.distributions as dist
 import pyro.poutine as poutine
-from phrasal import * 
-
-from search_inference import factor, HashingMarginal, memoize, Search
-from functools import wraps
-
-
-def Marginal(fn):
-    @wraps(fn)
-    def shawarma(*args):
-        return HashingMarginal(Search(fn, max_tries=int(1e3)).run(*args))
-    return memoize(shawarma)
-
+from phrasal import *
+from helpers import Marginal
+from helpers import wrapped_rpc as rpc
+from search_inference import factor
 
 expr = nltk.sem.Expression.fromstring
 
@@ -54,21 +42,23 @@ class L:
         doesnt take into account qud, literally infers belief...by replacing subutterance
         """
 
-
         interjector_belief=belief_prior(self.B) #state_prior() in RSAhyperb
         replacement = self.belief.replace_constituents_in_utt(correction)
-        print("L0's replacement: ",replacement)
-        print("L0's sampled interj belief: ", interjector_belief)
-        evaluation = rpc(goal=interjector_belief.L(), assumptions=self.swk+[replacement.L()]).prove()
-        #^the above doesnt prove interj belief based on replacement unless
-        #replacement == interj belief
-        #cannot make soft inference
-        print("L0's evaluation: ", evaluation)
-        #solution: sample from inventory of extra roles and replace in replacement stochastically
+
+        if not type(correction) == NULL_Utt:
+            added_expr = replacement
+        else:
+            added_expr = self.belief
+        #print("added_expr: ", added_expr)
+        #print("L0's replacement: ",replacement)
+        #print("L0's sampled interj belief: ", interjector_belief)
+        evaluation = rpc(goal=interjector_belief.L(), assumptions=self.swk+[added_expr.L()]).prove()
+
+        #current solution: have self.B include the actual replacement
+        #alternative solution: sample from inventory of extra roles and replace in replacement stochastically
         #so evaluation was always false unless null utterance was checked 
 
         factor("literal meaning", 0. if evaluation else -99999999.)#condition on s1 belief, correctly infers belief in basic scenario, how do i get blue ambiguity?
-        print("+"*20+ "    /listener   "+"\\"*20+"\n")
         return interjector_belief
 
     @Marginal
@@ -82,13 +72,16 @@ class L:
             pragmatic listener should select belief from B set
 
         """
+
         interjector_belief=belief_prior(self.B)
         qud = qud_prior(self.QUDs)
         speaker = S(self.s1_alpha, self.swk, self.B, interjector_belief, self.QUDs)
 
         #v below self belief == last_statement_made, once again
         speaker_marginal = speaker.interject(self.belief, qud)
-
+        print("prago listo debuggo")
+        print("speaker runs: ", len(speaker_marginal.trace_dist.exec_traces))
+        print("inferred speaker dist: ", speaker_marginal._dist_and_values())
         pyro.sample("speaker", speaker_marginal, obs=correction)
         print("µ"*20, " pragmatic listener infers: ", interjector_belief, " ", "µ"*20)
         return interjector_belief
@@ -212,36 +205,6 @@ def qud_prior(quds): #over dict
     ix = pyro.sample("qud", dist.Categorical(probs=torch.ones(len(keys))/len(keys)))
     qud = keys[ix.item()]
     return qud
-
-def plot_dist(d, output="plots/distplot.png", addinfo=None):
-    """
-    pyplot plotting function for lit list, prag speak, prag list
-
-    Args:
-        d: pyro HashingMarginal distribution with phrase values
-        output: output directory/path/file.png
-        addinfo: None or string to be put below plot
-    Returns:
-        output: output directory/path/file.png
-    """
-    support = [str((value, value.cost)) for value in d.enumerate_support()]
-    data = [d.log_prob(s).exp().item() for s in d.enumerate_support()]
-    plt.gca().set_position((.1, .3, .8, .6))
-
-    ax = plt.subplot(111)
-    width=0.3
-    bins = list(map(lambda x: x-width/2,range(1,len(data)+1)))
-    ax.bar(bins,data,width=width)
-    ax.set_xticks(list(map(lambda x: x, range(1,len(data)+1))))
-    ax.set_xticklabels(support,rotation=20, rotation_mode="anchor", ha="right")
-
-    if type(addinfo)==str:
-        plt.figtext(.1,.1, addinfo)
-
-    plt.tight_layout()
-    plt.savefig(output)
-
-    return output
 
 if __name__ == "__main__":
     pass

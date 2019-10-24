@@ -8,17 +8,19 @@ import helpers
 
 expr = nltk.sem.Expression.fromstring
 
+
 c = 1
+
+stab = event("stab", ["brutus", "caesar"], c)
+row = event("row", ["brutus", "boat"],c)
 
 brutus = role("agn", "brutus", c)
 caesar = role("pat", "caesar", c)
 knife = role("ins", "knife", c)
-stab = event("stab", ["brutus", "caesar"], c)
 forum = role("loc", "forum", c)
 sword = role("ins", "sword", c)
 rubicon = role("loc", "rubicon", c)
 paddle = role("ins", "paddle", c)
-row = event("row", ["brutus", "boat"],c)
 boat = role("pat", "boat",c)
 fun = role("gol", "fun",c)
 others = role("ass", "others",c)
@@ -27,11 +29,19 @@ brutus_pat = role("pat", "brutus", c)
 someone_else = role("agn", "someone_else",c)
 
 
-#how did it all happen??!?!?!
-#no belief may be subset of another belief
 beliefs = [
-        phrase([brutus, stab, caesar, forum, knife]),#last statement made in ex
-        phrase([brutus, stab, caesar, rubicon, sword]),#defense_belief 
+        phrase([brutus, stab, caesar, forum, knife]),#
+        phrase([brutus, stab, caesar, forum]),#
+        phrase([brutus, stab, caesar, knife]),#
+        phrase([brutus, stab, caesar, forum, knife]),#
+        phrase([brutus, stab, caesar, forum, sword]),#
+        phrase([brutus, stab, caesar, forum, knife]),#
+        phrase([brutus, stab, caesar, rubicon, sword]), 
+        phrase([brutus, stab, caesar, rubicon]), 
+        phrase([brutus, stab, caesar, sword]), 
+        phrase([brutus, stab, caesar, sword, rubicon]), 
+        phrase([brutus, stab, caesar, rubicon, knife]), 
+        phrase([brutus, stab, caesar, rubicon, sword]), 
         phrase([caesar_ag, stab, brutus_pat, forum, knife]),
         phrase([brutus, stab, caesar, rubicon, knife, fun]),
         phrase([brutus, stab, caesar, rubicon, sword, others, fun]),
@@ -57,30 +67,32 @@ quds = {
         "great": expr("great(brutus)"),
 }
 
-defense_belief = beliefs[1]
+defense_belief = beliefs[9]
 last_statement_made = beliefs[0]
 
 correction = phrase([rubicon])
 
 qud = "hang"
-alpha = 1.
+alpha = .2#finetune
 
 TIME = helpers.Timer()
-P2F = helpers.ProfileToFile()
+#P2F = helpers.ProfileToFile()
 
-defense_attorney = S(alpha, swk, beliefs, defense_belief, quds)
-prosecutor = L(alpha, swk, beliefs, last_statement_made, quds)
+if __name__ == "__main__":
 
-with TIME("s1 and l1 calculation"):
+    defense_attorney = S(alpha, swk, beliefs, defense_belief, quds)
+    prosecutor = L(alpha, swk, beliefs, last_statement_made, quds)
 
-    lit_listener_dist = prosecutor.L0(correction)
-    plot_dist(lit_listener_dist, output="plots/lit_listener.png", addinfo="Lit. Listener distribution.\n\n- Correction: "+str(phrase([rubicon])))
+    with TIME("s1 and l1 calculation"):
+
+        lit_listener_dist = prosecutor.L0(correction)
+        helpers.plotter(lit_listener_dist, output="plots/lit_listener.png", addinfo="Lit. Listener distribution.\n\n- Correction: "+str(correction))
 
 
-    defense_attorney_dist = defense_attorney.interject(last_statement_made, qud)
-    plot_dist(defense_attorney_dist,
-          output="plots/prag_speaker.png",addinfo="Speaker distribution.\n\n- "+"Speaker event belief: "+str(beliefs[1])+"\n- "+"QUD: "+str(quds[qud])+"\n- alpha = "+str(alpha))
+        defense_attorney_dist = defense_attorney.interject(last_statement_made, qud)
+        helpers.plotter(defense_attorney_dist, output="plots/prag_speaker.png",addinfo="Speaker distribution.\n\n- "+"Speaker event belief: "+str(beliefs[1])+"\n- "+"QUD: "+str(quds[qud])+"\n- alpha = "+str(alpha))
 
-    prag_listener_dist = prosecutor.L1(correction)
-    plot_dist(prag_listener_dist, output="plots/prag_listener.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(phrase([rubicon]))+"\n- alpha = "+str(alpha))
-
+        """
+        prag_listener_dist = prosecutor.L1(correction)
+        plotter(prag_listener_dist, output="plots/prag_listener.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(correction)+"\n- alpha = "+str(alpha))
+        """
