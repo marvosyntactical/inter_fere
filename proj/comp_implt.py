@@ -142,7 +142,7 @@ class S:
                         diff += [const]
             if diff:
                 d = phrase(diff) #difference in beliefs phrased fully
-                combos = set(diff.sub_utterances())
+                combos = set(d.sub_utterances())
                 possible_changers |= combos
         possible_changers = list(possible_changers)
         assert None not in possible_changers, "none in utt prior???"
