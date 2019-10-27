@@ -73,7 +73,7 @@ last_statement_made = beliefs[0]
 correction = phrase([rubicon])
 
 qud = "hang"
-alpha = .2#finetune
+alpha = 1.#finetune
 
 TIME = helpers.Timer()
 #P2F = helpers.ProfileToFile()
@@ -95,7 +95,5 @@ if __name__ == "__main__":
         helpers.plotter(defense_attorney_dist, output="plots/prag_speaker.png",addinfo=s1_info)
 
         #prag listener
-        """
         prag_listener_dist = prosecutor.L1(correction)
         plotter(prag_listener_dist, output="plots/prag_listener.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(correction)+"\n- alpha = "+str(alpha))
-        """

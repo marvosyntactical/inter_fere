@@ -42,23 +42,17 @@ class L:
         doesnt take into account qud, literally infers belief...by replacing subutterance
         """
 
-        interjector_belief=belief_prior(self.B) #state_prior() in RSAhyperb
+        interjector_belief=belief_prior(self.B) #state_prior() in base RSA
         replacement = self.belief.replace_constituents_in_utt(correction)
 
         if not type(correction) == NULL_Utt:
             added_expr = replacement
         else:
             added_expr = self.belief
-        #print("added_expr: ", added_expr)
-        #print("L0's replacement: ",replacement)
-        #print("L0's sampled interj belief: ", interjector_belief)
         evaluation = rpc(goal=interjector_belief.L(), assumptions=self.swk+[added_expr.L()]).prove()
 
-        #current solution: have self.B include the actual replacement
-        #alternative solution: sample from inventory of extra roles and replace in replacement stochastically
-        #so evaluation was always false unless null utterance was checked 
 
-        factor("literal meaning", 0. if evaluation else -99999999.)#condition on s1 belief, correctly infers belief in basic scenario, how do i get blue ambiguity?
+        factor("literal meaning", 0. if evaluation else -99999999.)
         return interjector_belief
 
     @Marginal
@@ -73,11 +67,11 @@ class L:
 
         """
 
-        interjector_belief=belief_prior(self.B)
+        interjector_belief=belief_prior(self.B)#state_prior() in base RSA
         qud = qud_prior(self.QUDs)
         speaker = S(self.s1_alpha, self.swk, self.B, interjector_belief, self.QUDs)
 
-        #v below self belief == last_statement_made, once again
+        #v below self belief == last_statement_made, as always 
         speaker_marginal = speaker.interject(self.belief, qud)
         print("prago listo debuggo")
         print("speaker runs: ", len(speaker_marginal.trace_dist.exec_traces))
@@ -122,6 +116,7 @@ class S:
         should be put in place here
         Fixing this:
             utterance prior depends only on belief set; becomes large tho
+        #TODO this method is a MESS
         """
 
         possible_changers = set()
@@ -130,25 +125,26 @@ class S:
 
         for belief in self.B:
             assigned = set(belief.assed.keys())
-            if assigned == {"NULL"}:
+            if assigned == {"NULL"}: #first leave out NULL utterances
                 possible_changers.add(belief)
                 continue
-            diff_roles = [] #differently assigned 
+            diff_roles = [] #collect roles differently assigned in opponent
             for role in assigned:
                 if role not in given_assigned:
                     diff_roles.append(role)
                 elif belief.assed[role] != given_full_belief.assed[role]:
                     diff_roles.append(role)
 
-            diff = []
+            diff = [] #collect differing constituents together
             for const in belief.elems:
                 for r in diff_roles:
                     if const.field == r:
                         diff += [const]
-            d = phrase(diff) #difference in beliefs phrased fully
-            possible_changers.add(d)
+            if diff:
+                d = phrase(diff) #difference in beliefs phrased fully
+                combos = set(diff.sub_utterances())
+                possible_changers |= combos
         possible_changers = list(possible_changers)
-        print([changer.str for changer in possible_changers])
         assert None not in possible_changers, "none in utt prior???"
 
         changerLogits = -torch.tensor([phr.cost for phr in possible_changers], dtype=torch.float64)

@@ -127,10 +127,19 @@ class HashingMarginal(dist.Distribution):
         try:
             return d.log_prob(torch.tensor([list(values_map.keys()).index(value_hash)]))
         except ValueError as e:
-            print(e)
+            import json
+            print("seen values ", [(h, v) for h,v in values_map.items()])
+            
+            values_map_file = open("values_map.json", "w")
+            json.dump(values_map, values_map_file)
+            values_map_file.close()
             print("missing val ", val)
             print("from last search run of: ")
             print(search_runs)
+            search_runs_file = open("search_runs.json", "w")
+            json.dump(search_runs, search_runs_file)
+            search_runs_file.close()
+
             raise e
 
 
