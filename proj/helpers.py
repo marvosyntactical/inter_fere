@@ -7,14 +7,10 @@ from search_inference import memoize, HashingMarginal, memoize, Search
 from functools import wraps
 import matplotlib.pyplot as plt
 
-VARA = 1
-def FUNA(args):
-    return args
-
 def Marginal(fn):
     @wraps(fn)
     def shawarma(*args):
-        return HashingMarginal(Search(fn, max_tries=int(1e3)).run(*args))
+        return HashingMarginal(Search(fn, max_tries=int(1e6)).run(*args))
     return memoize(shawarma)
 
 def Memo(fn):
@@ -23,6 +19,15 @@ def Memo(fn):
         return fn(*args)
     return memoize(yufka)
 
+def timid(fn):
+    @wraps(fn)
+    def falafelwrap(*args):
+        now = time.time()
+        r = fn(*args)
+        dt = time.time()-now
+        print("\n  Execution time for "+fn.__name__+" was "+str(dt))
+        return r
+    return falafelwrap
 
 class wrapped_rpc(rpc):
     def __init__(self, *args, **kwargs):
@@ -42,7 +47,7 @@ class wrapped_rpc(rpc):
             self._proof = wrapped_rpc._decorate_clauses(clauses)
         return self._result
 
-def plotter(d, output="plots/distplot.png", addinfo=None):
+def plotter(d, output="plots/distplot.png", addinfo=None, topk=20):
     """
     pyplot plotting function for lit list, prag speak, prag list
 
@@ -50,12 +55,12 @@ def plotter(d, output="plots/distplot.png", addinfo=None):
         d: pyro HashingMarginal distribution with phrase values
         output: output directory/path/file.png
         addinfo: None or string to be put below plot
+        topk: int, topk values to consider in plotting
     Returns:
         output: output directory/path/file.png
     """
 
-    support = [str((str(value), value.cost)) for value in d.enumerate_support()]
-
+    support = d.enumerate_support()
     data = [d.log_prob(s).exp().item() for s in d.enumerate_support()]
     #plt.gca().set_position((.1, .3, .8, .6))
 
@@ -76,9 +81,7 @@ def plotter(d, output="plots/distplot.png", addinfo=None):
     plt.figtext(.1,10, metadata)
 
     #plt.tight_layout()
-    if output == "show":
-        pass
-    else:
+    if output != "show":
         plt.savefig(output)
         return output
 

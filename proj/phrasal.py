@@ -19,7 +19,7 @@ class NULL_Utt(Utt):
     def __init__(self):
         self.str = NULL
         self.cost = .5#finetune manually? for sensible model, probably 0<c<1
-        self.field = None
+        self.field = "None"
         self.elems = {self}
         self.assed = {"NULL": "NIL"}
 
@@ -44,7 +44,7 @@ class phrase(Utt):
     def __init__(self, utts):
 
         for utt in utts:
-           assert isinstance(utt,Utt)
+            assert isinstance(utt,Utt), str(utt)+" "+str(type(utt))
         self.str = "exists e."+" & ".join([utt.str for utt in utts])
         self.cost = sum([utt.cost for utt in utts])
 

@@ -3,8 +3,8 @@ import pyro
 import pyro.distributions as dist
 import pyro.poutine as poutine
 from phrasal import *
-from helpers import Marginal
-from helpers import wrapped_rpc as rpc
+from helpers import *
+rpc = wrapped_rpc
 from search_inference import factor
 
 expr = nltk.sem.Expression.fromstring
@@ -113,34 +113,49 @@ class S:
         self.QUDs = QUDs
         self.qudSelf = None
 
+    @timid
+    @Memo
     def utterance_prior(self,given_full_belief):
         """
         My utterance prior is a function of speaker state/belief and given belief
         This is unlike in other RSA examples and a more general but far costlier to calculate prior
         should be put in place here
+        Fixing this:
+            utterance prior depends only on belief set; becomes large tho
         """
-        both_assigned = set(self.belief.assed.keys()).intersection(set(given_full_belief.assed.keys()))
-        diff_roles = [] #differently assigned 
-        for role in both_assigned:
-            if self.belief.assed[role] != given_full_belief.assed[role]:
-                diff_roles.append(role)
-        diff = []
-        for const in self.belief.elems:
-            for r in diff_roles:
-                if const.field == r:
-                    diff += [const]
-        d = phrase(diff) #difference in beliefs phrased fully
 
-        possible_changers = d.sub_utterances()
-        changerLogits = -torch.tensor([phr.cost for phr in possible_changers], dtype=torch.float64) 
+        possible_changers = set()
+        given_assigned = set(given_full_belief.assed.keys())
+
+
+        for belief in self.B:
+            assigned = set(belief.assed.keys())
+            if assigned == {"NULL"}:
+                possible_changers.add(belief)
+                continue
+            diff_roles = [] #differently assigned 
+            for role in assigned:
+                if role not in given_assigned:
+                    diff_roles.append(role)
+                elif belief.assed[role] != given_full_belief.assed[role]:
+                    diff_roles.append(role)
+
+            diff = []
+            for const in belief.elems:
+                for r in diff_roles:
+                    if const.field == r:
+                        diff += [const]
+            d = phrase(diff) #difference in beliefs phrased fully
+            possible_changers.add(d)
+        possible_changers = list(possible_changers)
+        print([changer.str for changer in possible_changers])
+        assert None not in possible_changers, "none in utt prior???"
+
+        changerLogits = -torch.tensor([phr.cost for phr in possible_changers], dtype=torch.float64)
         ix = pyro.sample("utterance",dist.Categorical(logits=changerLogits))
-        """"""
-        print("changer logits: ", changerLogits)
-        print("possible_changers:")
-        print([c.L() for c in possible_changers])
-        print(possible_changers[ix])
-        """"""
-        return possible_changers[ix]
+        print(ix, len(possible_changers))
+        r = possible_changers[ix.item()]
+        return r
 
     @Marginal
     def interject(self, given_full_belief, qud):
@@ -153,7 +168,6 @@ class S:
         Args:
         """
 
-        """
         print("~"*20+"Speaker interject"+"~"*20+"\n")
         print("\ndebug: speaker initialized")
         print("qud: "+ qud)
@@ -161,13 +175,14 @@ class S:
         print("\ndebug: self.belief.L(): ", self.belief.L())
         print("\ndebug: given_full_belief: ", given_full_belief.L())
         print("\ndebug: self.swk: ", self.swk)
-        """
+
         self.qudSelf = rpc(goal=self.QUDs[qud], assumptions=self.swk+[self.belief.L()]).prove()
 
 
         with poutine.scale(scale=torch.tensor(float(self.alpha))):
             utterance = self.utterance_prior(given_full_belief)
             print("interject utterance prior: ", utterance)
+            assert utterance != None
 
             #Construct Listener in head
             listener = L(self.alpha, self.swk, self.B, given_full_belief, self.QUDs)
