@@ -68,7 +68,7 @@ class L:
 
         """
 
-        interjector_belief=belief_prior(self.B)#state_prior() in base RSA
+        interjector_belief=belief_prior(self.B[-1:])#state_prior() in base RSA
         qud = qud_prior(self.QUDs)
         speaker = S(self.s1_alpha, self.swk, self.B, interjector_belief, self.QUDs)
 
