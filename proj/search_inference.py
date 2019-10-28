@@ -91,7 +91,7 @@ class HashingMarginal(dist.Distribution):
                 value_hash = hash(value)
             if value_hash in logits:
                 # Value has already been seen.
-                logits[value_hash] = dist.util.logsumexp(torch.stack([logits[value_hash].double(),logit.double()]), dim=-1)
+                logits[value_hash] = dist.util.logsumexp(torch.stack([logits[value_hash],logit]), dim=-1)
             else:
                 logits[value_hash] = logit
                 values_map[value_hash] = value
@@ -127,17 +127,17 @@ class HashingMarginal(dist.Distribution):
         try:
             return d.log_prob(torch.tensor([list(values_map.keys()).index(value_hash)]))
         except ValueError as e:
-            import json
+            import pickle 
             print("seen values ", [(h, v) for h,v in values_map.items()])
 
             values_map_file = open("values_map.json", "w")
-            json.dump(values_map, values_map_file)
+            pickle.dump(values_map, values_map_file)
             values_map_file.close()
             print("missing val ", val)
             print("from last search run of: ")
             print(search_runs)
             search_runs_file = open("search_runs.json", "w")
-            json.dump(search_runs, search_runs_file)
+            pickle.dump(search_runs, search_runs_file)
             search_runs_file.close()
 
             raise e
@@ -196,7 +196,7 @@ class Search(TracePosterior):
             poutine.queue(self.model, queue=q, max_tries=self.max_tries))
         while not q.empty():
             tr = p.get_trace(*args, **kwargs)
-            yield tr, tr.log_prob_sum().double()
+            yield tr, tr.log_prob_sum()
 
     def run(self, *args, **kwargs):
         """

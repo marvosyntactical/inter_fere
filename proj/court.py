@@ -8,6 +8,7 @@ import helpers
 
 expr = nltk.sem.Expression.fromstring
 
+print("Court.py started running...")
 
 c = 1
 
@@ -91,11 +92,11 @@ if __name__ == "__main__":
 
         #speaker
         s1_info = "Speaker distribution.\n\n- "+"Speaker event belief: "+str(beliefs[1])+"\n- "+"QUD: "+str(quds[qud])+"\n- alpha = "+str(alpha)
-        defense_attorney_dist = defense_attorney.interject(last_statement_made, qud, smoke_test=True)
+        defense_attorney_dist = defense_attorney.interject(last_statement_made, qud,smoke_test=False)
         helpers.plotter(defense_attorney_dist, output="plots/prag_speaker.png",addinfo=s1_info)
 
     with TIME("l1 calculation"):
         #prag listener 
-        prag_listener_dist = prosecutor.L1(correction, smoke_test=True)
+        prag_listener_dist = prosecutor.L1(correction, smoke_test=False)
         plotter(prag_listener_dist, output="plots/prag_listener.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(correction)+"\n- alpha = "+str(alpha))
 

@@ -139,7 +139,7 @@ class S:
                 for rol in assigned:
                     if rol not in given_assigned:
                         diff_roles.append(rol)
-                    elif belief.assed[role] != given_full_belief.assed[rol]:
+                    elif belief.assed[rol] != given_full_belief.assed[rol]:
                         diff_roles.append(rol)
 
                 diff = [] #collect differing constituents together
@@ -155,7 +155,7 @@ class S:
 
         assert None not in possible_changers, "utterance prior incorrect"
 
-        changerLogits = -torch.tensor([phr.cost for phr in possible_changers], dtype=torch.float64)
+        changerLogits = -torch.tensor([phr.cost for phr in possible_changers])
         ix = pyro.sample("utterance",dist.Categorical(logits=changerLogits))
         print(ix, len(possible_changers))
         r = possible_changers[ix.item()]

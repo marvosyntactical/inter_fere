@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#BATCH --job-name=💯%😍
+#BATCH --job-name=💯%👍
 #SBATCH -o "output/smokedouble.stdout"
 #SBATCH -e "output/smokedouble.stderr"
 #SBATCH --ntasks=1
