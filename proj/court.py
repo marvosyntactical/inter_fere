@@ -100,6 +100,6 @@ if __name__ == "__main__":
 
     with TIME("l1 calculation", x=True):
         #prag listener 
-        prag_listener_dist = prosecutor.L1(correction, smoke_test=True)
+        prag_listener_dist = prosecutor.L1(correction, smoke_test=False)
         plotter(prag_listener_dist, output="plots/prag_listener.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(correction)+"\n- alpha = "+str(alpha))
 

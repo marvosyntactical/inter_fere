@@ -73,7 +73,7 @@ class L:
         speaker = S(self.s1_alpha, self.swk, self.B, interjector_belief, self.QUDs)
 
         #v below self belief == last_statement_made, as always 
-        speaker_marginal = speaker.interject(self.belief, qud, smoke_test=smoke_test)
+        speaker_marginal = speaker.interject(self.belief, qud, interjector_belief, smoke_s1=smoke_test)
         pyro.sample("speaker", speaker_marginal, obs=correction)
 
 
@@ -114,9 +114,10 @@ class S:
         self.qudSelf = None
 
     @timid
-    @Memo
-    def utterance_prior(self,given_full_belief, smoke_test=False):
+    def utterance_prior(self,given_full_belief, smoke_utt=False):
         """
+        not actually a function of own belief
+
         My utterance prior is a function of speaker state/belief and given belief
         This is unlike in other RSA examples and a more general but far costlier to calculate prior
         should be put in place here
@@ -128,12 +129,12 @@ class S:
         possible_changers = set()
         given_assigned = set(given_full_belief.assed.keys())
 
-        if smoke_test:
+        if smoke_utt:
             possible_changers = [\
-                    phrase([phrasal.role("loc", "rubicon", 1)]),\
+                    phrase([phrasal.role("loc","rubicon", 1)]),\
                     phrase([phrasal.role("loc","rubicon", 1),phrasal.role("ins", "sword",1)]),\
-                    phrase([phrasal.role("ins", "sword", 1)])]#,\
-                    #phrase([NULL_Utt()])]
+                    phrase([phrasal.role("ins","sword", 1)]),\
+                    phrase([NULL_Utt()])]
         else:
             for belief in self.B:
                 assigned = set(belief.assed.keys())
@@ -160,16 +161,16 @@ class S:
 
         assert None not in possible_changers, "utterance prior incorrect"
 
-        changerLogits = -torch.tensor([phr.cost for phr in possible_changers])
+        changerLogits = -torch.tensor([phr.cost for phr in possible_changers], dtype=torch.float32)
         ix = pyro.sample("utterance",dist.Categorical(logits=changerLogits))
         print(ix, len(possible_changers))
         r = possible_changers[ix.item()]
         return r
 
     @Marginal
-    def interject(self, given_full_belief, qud, smoke_test=False):
+    def interject(self, given_full_belief, qud, own_belief, smoke_s1=False):
         """
-        The heart of the project
+        XXX interject temporarily receives self belief as arg
         Speaker decides wether to make a correction by inferring literal listener interpretation
         based on own question under discussion value
         and the opposing side's statement
@@ -185,11 +186,11 @@ class S:
         print("\ndebug: given_full_belief: ", given_full_belief.L())
         print("\ndebug: self.swk: ", self.swk)
 
-        self.qudSelf = rpc(goal=self.QUDs[qud], assumptions=self.swk+[self.belief.L()]).prove()
+        self.qudSelf = rpc(goal=self.QUDs[qud], assumptions=self.swk+[own_belief.L()]).prove()
 
 
         with poutine.scale(scale=torch.tensor(float(self.alpha))):
-            utterance = self.utterance_prior(given_full_belief, smoke_test=smoke_test)
+            utterance = self.utterance_prior(given_full_belief, smoke_utt=smoke_s1)
             print("interject utterance prior: ", utterance)
             assert utterance != None
 

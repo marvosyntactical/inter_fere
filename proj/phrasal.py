@@ -9,11 +9,15 @@ inventory = {"ins","agn","pat","loc","thm","gol","ass"}
 NULL = "NULL"
 
 class Utt:
+    def __init__(self):
+        self.str = ""
     def __str__(self):
         return self.str
 
     def L(self):
         return expr(self.str)
+    def __hash__(self):
+        return hash(self.str)
 
 class NULL_Utt(Utt):
     def __init__(self):
@@ -87,7 +91,7 @@ class phrase(Utt):
         """
 
         f = cons_utterance.field
-        proxy = copy.deepcopy(self)
+        proxy = copy.copy(self)
         for elem in proxy.elems:
             if (type(elem) == role and elem.field == f) or (type(elem)==event and elem.field == f):
                 proxy.elems.remove(elem)

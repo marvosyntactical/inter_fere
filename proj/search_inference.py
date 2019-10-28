@@ -120,7 +120,7 @@ class HashingMarginal(dist.Distribution):
         print("&"*10)
         print("log_prob values in HashingMarginal:")
         print("d: ", d)
-        print("values_map: ", [(h, v.cost) if type(v) != type(True) else (h, v) for h, v in values_map.items()])
+        print("values_map: ", [(h, str(v)) for h, v in values_map.items()])
         print("val: ", val)
         print("value_hash: ", value_hash)
 
