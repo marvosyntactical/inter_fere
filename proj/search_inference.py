@@ -129,7 +129,7 @@ class HashingMarginal(dist.Distribution):
         except ValueError as e:
             import json
             print("seen values ", [(h, v) for h,v in values_map.items()])
-            
+
             values_map_file = open("values_map.json", "w")
             json.dump(values_map, values_map_file)
             values_map_file.close()
@@ -196,7 +196,7 @@ class Search(TracePosterior):
             poutine.queue(self.model, queue=q, max_tries=self.max_tries))
         while not q.empty():
             tr = p.get_trace(*args, **kwargs)
-            yield tr, tr.log_prob_sum()
+            yield tr, tr.log_prob_sum().double()
 
     def run(self, *args, **kwargs):
         """
