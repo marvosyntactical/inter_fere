@@ -2,6 +2,7 @@ import torch
 import pyro
 import pyro.distributions as dist
 import pyro.poutine as poutine
+import phrasal
 from phrasal import *
 from helpers import *
 rpc = wrapped_rpc
@@ -56,7 +57,7 @@ class L:
         return interjector_belief
 
     @Marginal
-    def L1(self, correction):
+    def L1(self, correction, smoke_test=False):
 
         """
         infers belief of s1
@@ -72,7 +73,7 @@ class L:
         speaker = S(self.s1_alpha, self.swk, self.B, interjector_belief, self.QUDs)
 
         #v below self belief == last_statement_made, as always 
-        speaker_marginal = speaker.interject(self.belief, qud)
+        speaker_marginal = speaker.interject(self.belief, qud, smoke_test=smoke_test)
         print("prago listo debuggo")
         print("speaker runs: ", len(speaker_marginal.trace_dist.exec_traces))
         print("inferred speaker dist: ", speaker_marginal._dist_and_values())
@@ -109,7 +110,7 @@ class S:
 
     @timid
     @Memo
-    def utterance_prior(self,given_full_belief):
+    def utterance_prior(self,given_full_belief, smoke_test=False):
         """
         My utterance prior is a function of speaker state/belief and given belief
         This is unlike in other RSA examples and a more general but far costlier to calculate prior
@@ -122,30 +123,37 @@ class S:
         possible_changers = set()
         given_assigned = set(given_full_belief.assed.keys())
 
+        if smoke_test:
+            possible_changers = [\
+                    phrase([phrasal.role("loc", "rubicon", 1)]),\
+                    phrase([phrasal.role("loc","rubicon", 1),phrasal.role("ins", "sword",1)]),\
+                    phrase([phrasal.role("ins", "sword", 1)]),\
+                    phrase([NULL_Utt()])]
+        else:
+            for belief in self.B:
+                assigned = set(belief.assed.keys())
+                if assigned == {"NULL"}: #first leave out NULL utterances
+                    possible_changers.add(belief)
+                    continue
+                diff_roles = [] #collect roles differently assigned in opponent
+                for rol in assigned:
+                    if rol not in given_assigned:
+                        diff_roles.append(rol)
+                    elif belief.assed[role] != given_full_belief.assed[rol]:
+                        diff_roles.append(rol)
 
-        for belief in self.B:
-            assigned = set(belief.assed.keys())
-            if assigned == {"NULL"}: #first leave out NULL utterances
-                possible_changers.add(belief)
-                continue
-            diff_roles = [] #collect roles differently assigned in opponent
-            for role in assigned:
-                if role not in given_assigned:
-                    diff_roles.append(role)
-                elif belief.assed[role] != given_full_belief.assed[role]:
-                    diff_roles.append(role)
+                diff = [] #collect differing constituents together
+                for const in belief.elems:
+                    for r in diff_roles:
+                        if const.field == r:
+                            diff += [const]
+                if diff:
+                    d = phrase(diff) #difference in beliefs phrased fully
+                    combos = set(d.sub_utterances())
+                    possible_changers |= combos
+            possible_changers = list(possible_changers)
 
-            diff = [] #collect differing constituents together
-            for const in belief.elems:
-                for r in diff_roles:
-                    if const.field == r:
-                        diff += [const]
-            if diff:
-                d = phrase(diff) #difference in beliefs phrased fully
-                combos = set(d.sub_utterances())
-                possible_changers |= combos
-        possible_changers = list(possible_changers)
-        assert None not in possible_changers, "none in utt prior???"
+        assert None not in possible_changers, "utterance prior incorrect"
 
         changerLogits = -torch.tensor([phr.cost for phr in possible_changers], dtype=torch.float64)
         ix = pyro.sample("utterance",dist.Categorical(logits=changerLogits))
@@ -154,7 +162,7 @@ class S:
         return r
 
     @Marginal
-    def interject(self, given_full_belief, qud):
+    def interject(self, given_full_belief, qud, smoke_test=False):
         """
         The heart of the project
         Speaker decides wether to make a correction by inferring literal listener interpretation
@@ -176,7 +184,7 @@ class S:
 
 
         with poutine.scale(scale=torch.tensor(float(self.alpha))):
-            utterance = self.utterance_prior(given_full_belief)
+            utterance = self.utterance_prior(given_full_belief, smoke_test=smoke_test)
             print("interject utterance prior: ", utterance)
             assert utterance != None
 

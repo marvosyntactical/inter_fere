@@ -9,21 +9,21 @@ import matplotlib.pyplot as plt
 
 def Marginal(fn):
     @wraps(fn)
-    def shawarma(*args):
-        return HashingMarginal(Search(fn, max_tries=int(1e6)).run(*args))
+    def shawarma(*args, **kwargs):
+        return HashingMarginal(Search(fn, max_tries=int(1e6)).run(*args, **kwargs))
     return memoize(shawarma)
 
 def Memo(fn):
     @wraps(fn)
-    def yufka(*args):
-        return fn(*args)
+    def yufka(*args, **kwargs):
+        return fn(*args, **kwargs)
     return memoize(yufka)
 
 def timid(fn):
     @wraps(fn)
-    def falafelwrap(*args):
+    def falafelwrap(*args, **kwargs):
         now = time.time()
-        r = fn(*args)
+        r = fn(*args, **kwargs)
         dt = time.time()-now
         print("\n  Execution time for "+fn.__name__+" was "+str(dt))
         return r

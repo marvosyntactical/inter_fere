@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#BATCH --job-name=💯%true
-#SBATCH -o "output/big_tries.stdout"
-#SBATCH -e "output/big_tries.stderr"
+#BATCH --job-name=💯%😍
+#SBATCH -o "output/smokedouble.stdout"
+#SBATCH -e "output/smokedouble.stderr"
 #SBATCH --ntasks=1
 #SBATCH --time=05:00:00
 #SBATCH --mem=120G
