@@ -68,15 +68,21 @@ class L:
 
         """
 
-        interjector_belief=belief_prior(self.B[-1:])#state_prior() in base RSA
+        interjector_belief=belief_prior(self.B)#state_prior() in base RSA
         qud = qud_prior(self.QUDs)
         speaker = S(self.s1_alpha, self.swk, self.B, interjector_belief, self.QUDs)
 
         #v below self belief == last_statement_made, as always 
         speaker_marginal = speaker.interject(self.belief, qud, smoke_test=smoke_test)
+        pyro.sample("speaker", speaker_marginal, obs=correction)
+
+
+
+
+
+
         print("speaker runs: ", len(speaker_marginal.trace_dist.exec_traces))
         print("inferred speaker dist: ", speaker_marginal._dist_and_values())
-        pyro.condition(speaker_marginal, data={"speaker": correction})
         print("h"*20, " pragmatic listener infers: ", interjector_belief, " ", "h"*20)
         return interjector_belief
 
@@ -126,8 +132,8 @@ class S:
             possible_changers = [\
                     phrase([phrasal.role("loc", "rubicon", 1)]),\
                     phrase([phrasal.role("loc","rubicon", 1),phrasal.role("ins", "sword",1)]),\
-                    phrase([phrasal.role("ins", "sword", 1)]),\
-                    phrase([NULL_Utt()])]
+                    phrase([phrasal.role("ins", "sword", 1)])]#,\
+                    #phrase([NULL_Utt()])]
         else:
             for belief in self.B:
                 assigned = set(belief.assed.keys())

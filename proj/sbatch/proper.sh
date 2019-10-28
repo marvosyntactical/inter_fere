@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-#BATCH --job-name=💯%👍
-#SBATCH -o "output/smoked.stdout"
-#SBATCH -e "output/smoked.stderr"
+#BATCH --job-name=100
+#SBATCH -o "output/longcalc.stdout"
+#SBATCH -e "output/longcalc.stderr"
 #SBATCH --ntasks=1
 #SBATCH --time=05:00:00
-#SBATCH --mem=120G
+#SBATCH --mem=256G
 #SBATCH --partition=compute
 
 # Add ICL-Slurm binaries to path

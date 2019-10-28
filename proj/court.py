@@ -27,7 +27,7 @@ fun = role("gol", "fun",c)
 others = role("ass", "others",c)
 caesar_ag = role("agn", "caesar", c)
 brutus_pat = role("pat", "brutus", c)
-someone_else = role("agn", "someone_else",c)
+someone_else = role("agn", "someone_else",4*c)
 
 
 beliefs = [
@@ -100,6 +100,6 @@ if __name__ == "__main__":
 
     with TIME("l1 calculation", x=True):
         #prag listener 
-        prag_listener_dist = prosecutor.L1(correction, smoke_test=False)
+        prag_listener_dist = prosecutor.L1(correction, smoke_test=True)
         plotter(prag_listener_dist, output="plots/prag_listener.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(correction)+"\n- alpha = "+str(alpha))
 
