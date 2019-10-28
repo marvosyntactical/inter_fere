@@ -84,18 +84,21 @@ if __name__ == "__main__":
     defense_attorney = S(alpha, swk, beliefs, defense_belief, quds)
     prosecutor = L(alpha, swk, beliefs, last_statement_made, quds)
 
-    with TIME("s1 and l0 calculation"):
+    """
+    with TIME("l0 calculation", x=False):
         #lit listener
         l0_info =  "Lit. Listener distribution.\n\n- Correction: "+str(correction)
         lit_listener_dist = prosecutor.L0(correction)
         helpers.plotter(lit_listener_dist, output="plots/lit_listener.png", addinfo=l0_info)
 
+    with TIME("s1 calculcation", x=False):
         #speaker
         s1_info = "Speaker distribution.\n\n- "+"Speaker event belief: "+str(beliefs[1])+"\n- "+"QUD: "+str(quds[qud])+"\n- alpha = "+str(alpha)
         defense_attorney_dist = defense_attorney.interject(last_statement_made, qud,smoke_test=False)
         helpers.plotter(defense_attorney_dist, output="plots/prag_speaker.png",addinfo=s1_info)
+    """
 
-    with TIME("l1 calculation"):
+    with TIME("l1 calculation", x=True):
         #prag listener 
         prag_listener_dist = prosecutor.L1(correction, smoke_test=False)
         plotter(prag_listener_dist, output="plots/prag_listener.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(correction)+"\n- alpha = "+str(alpha))

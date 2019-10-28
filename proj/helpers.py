@@ -107,8 +107,9 @@ class Timer(object):
         super(object, self).__init__(*args, **kwargs)
 
     @contextmanager
-    def __call__(self, info):
+    def __call__(self, info, x=True):
         t = time.time()
-        yield
+        if x: yield
+        else: yield None
         dt = time.time()-t
         print("Time spent in {} Timer: ".format(str(info), str(dt)))

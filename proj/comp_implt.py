@@ -74,11 +74,10 @@ class L:
 
         #v below self belief == last_statement_made, as always 
         speaker_marginal = speaker.interject(self.belief, qud, smoke_test=smoke_test)
-        print("prago listo debuggo")
         print("speaker runs: ", len(speaker_marginal.trace_dist.exec_traces))
         print("inferred speaker dist: ", speaker_marginal._dist_and_values())
-        pyro.sample("speaker", speaker_marginal, obs=correction)
-        print("µ"*20, " pragmatic listener infers: ", interjector_belief, " ", "µ"*20)
+        pyro.condition(speaker_marginal, data={"speaker": correction})
+        print("h"*20, " pragmatic listener infers: ", interjector_belief, " ", "h"*20)
         return interjector_belief
 
 
