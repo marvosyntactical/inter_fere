@@ -47,6 +47,23 @@ class wrapped_rpc(rpc):
             self._proof = wrapped_rpc._decorate_clauses(clauses)
         return self._result
 
+#plotting adapted from RSA-hyperbole.ipynb:
+def plot_dist(d, output="plots/plot_dist.png"):
+    support = d.enumerate_support()
+    data = [d.log_prob(s).exp().item() for s in d.enumerate_support()]
+    names = support
+
+    ax = plt.subplot(111)
+    width=0.3
+    bins = list(map(lambda x: x-width/2,range(1,len(data)+1)))
+    ax.bar(bins,data,width=width)
+    ax.set_xticks(list(map(lambda x: x, range(1,len(data)+1))))
+    ax.set_xticklabels(names,rotation=45, rotation_mode="anchor", ha="right")
+
+    plt.savefig(output, pad_inches=5)
+
+
+
 def plotter(d, output="plots/distplot.png", addinfo=None, topk=20):
     """
     pyplot plotting function for lit list, prag speak, prag list
@@ -82,7 +99,7 @@ def plotter(d, output="plots/distplot.png", addinfo=None, topk=20):
 
     #plt.tight_layout()
     if output != "show":
-        plt.savefig(output)
+        plt.savefig(output, pad_inches=5)
         return output
 
 

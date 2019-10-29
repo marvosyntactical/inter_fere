@@ -77,10 +77,6 @@ class L:
         pyro.sample("speaker", speaker_marginal, obs=correction)
 
 
-
-
-
-
         print("speaker runs: ", len(speaker_marginal.trace_dist.exec_traces))
         print("inferred speaker dist: ", speaker_marginal._dist_and_values())
         print("h"*20, " pragmatic listener infers: ", interjector_belief, " ", "h"*20)
