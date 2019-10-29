@@ -77,8 +77,8 @@ qud = "hang"
 alpha = 1.#finetune
 
 TIME = helpers.Timer()
-smog = True
-ext = 421
+smog = False
+ext = 99 
 if __name__ == "__main__":
 
     defense_attorney = S(alpha, swk, beliefs, defense_belief, quds)

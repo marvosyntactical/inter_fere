@@ -107,5 +107,5 @@ class phrase(Utt):
         for m in range(1,len(self.elems)+1):
             combs += list(itertools.combinations(self.elems, m))
         #empty utterance as option
-        return [phrase(su) for su in combs]+[NULL_Utt()]
+        return [phrase(su) for su in combs]+[phrase([NULL_Utt()])]
 
