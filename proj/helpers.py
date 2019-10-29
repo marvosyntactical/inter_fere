@@ -49,6 +49,7 @@ class wrapped_rpc(rpc):
 
 #plotting adapted from RSA-hyperbole.ipynb:
 def plot_dist(d, output="plots/plot_dist.png"):
+    plt.clf()
     support = d.enumerate_support()
     data = [d.log_prob(s).exp().item() for s in d.enumerate_support()]
     names = support
@@ -76,6 +77,7 @@ def plotter(d, output="plots/distplot.png", addinfo=None, topk=20):
     Returns:
         output: output directory/path/file.png
     """
+    plt.clf()
 
     support = d.enumerate_support()
     data = [d.log_prob(s).exp().item() for s in d.enumerate_support()]
