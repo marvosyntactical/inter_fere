@@ -78,20 +78,20 @@ alpha = 1.#finetune
 
 TIME = helpers.Timer()
 smog = False
-ext = 99 
+ext = 700 
 if __name__ == "__main__":
 
     defense_attorney = S(alpha, swk, beliefs, defense_belief, quds)
     prosecutor = L(alpha, swk, beliefs, last_statement_made, quds)
 
-    with TIME("l0 calculation", x=False):
+    with TIME("l0 calculation", x=True):
         #lit listener
         l0_info =  "Lit. Listener distribution.\n\n- Correction: "+str(correction)
         lit_listener_dist = prosecutor.L0(correction)
         helpers.plotter(lit_listener_dist, output="plots/lit_listener_"+str(ext)+".png", addinfo=l0_info)
         helpers.plot_dist(lit_listener_dist, output="plots/lit_listener_"+str(ext+1)+".png")
 
-    with TIME("s1 calculcation", x=False):
+    with TIME("s1 calculcation", x=True):
         #speaker
         s1_info = "Speaker distribution.\n\n- "+"Speaker event belief: "+str(beliefs[1])+"\n- "+"QUD: "+str(quds[qud])+"\n- alpha = "+str(alpha)
         defense_attorney_dist = defense_attorney.interject(last_statement_made,qud,defense_belief,smoke_s1=smog)
