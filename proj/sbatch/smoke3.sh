@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 #BATCH --job-name=100
-#SBATCH -o "output/heavy2.stdout"
-#SBATCH -e "output/heavy2.stderr"
+#SBATCH -o "output/smoke3.stdout"
+#SBATCH -e "output/smoke3.stderr"
 #SBATCH --ntasks=1
 #SBATCH --time=2-23:00:00
 #SBATCH --mem=256G
