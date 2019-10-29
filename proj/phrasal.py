@@ -91,7 +91,7 @@ class phrase(Utt):
         """
 
         f = cons_utterance.field
-        proxy = copy.copy(self)
+        proxy = phrase(list[self.elems])
         for elem in proxy.elems:
             if (type(elem) == role and elem.field == f) or (type(elem)==event and elem.field == f):
                 proxy.elems.remove(elem)
