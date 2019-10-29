@@ -131,4 +131,4 @@ class Timer(object):
         if x: yield
         else: yield None
         dt = time.time()-t
-        print("Time spent in {} Timer: ".format(str(info), str(dt)))
+        print("Time spent in {} Timer: {}".format(str(info), str(dt)))

@@ -16,8 +16,6 @@ class Utt:
 
     def L(self):
         return expr(self.str)
-    def __hash__(self):
-        return hash(self.str)
 
 class NULL_Utt(Utt):
     def __init__(self):
@@ -55,6 +53,8 @@ class phrase(Utt):
         self.populate(utts)
         self.assign()
 
+    def __hash__(self):
+        return hash(" ".join(sorted([e.str for e in self.elems])))
 
     def populate(self, utts):
         self.elems = set()
@@ -91,7 +91,7 @@ class phrase(Utt):
         """
 
         f = cons_utterance.field
-        proxy = phrase(list[self.elems])
+        proxy = phrase(list(self.elems))
         for elem in proxy.elems:
             if (type(elem) == role and elem.field == f) or (type(elem)==event and elem.field == f):
                 proxy.elems.remove(elem)
