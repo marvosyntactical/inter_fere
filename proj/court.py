@@ -88,19 +88,19 @@ if __name__ == "__main__":
         #lit listener
         l0_info =  "Lit. Listener distribution.\n\n- Correction: "+str(correction)
         lit_listener_dist = prosecutor.L0(correction)
-        helpers.plotter(lit_listener_dist, output="plots/lit_listener_1.png", addinfo=l0_info)
-        helpers.plot_dist(lit_listener_dist, output="plots/lit_listener_2.png")
+        helpers.plotter(lit_listener_dist, output="plots/lit_listener_4.png", addinfo=l0_info)
+        helpers.plot_dist(lit_listener_dist, output="plots/lit_listener_5.png")
 
     with TIME("s1 calculcation", x=False):
         #speaker
         s1_info = "Speaker distribution.\n\n- "+"Speaker event belief: "+str(beliefs[1])+"\n- "+"QUD: "+str(quds[qud])+"\n- alpha = "+str(alpha)
-        defense_attorney_dist = defense_attorney.interject(last_statement_made, qud, defense_belief,smoke_s1=False)
-        helpers.plotter(defense_attorney_dist, output="plots/prag_speaker_1.png",addinfo=s1_info)
-        helpers.plot_dist(defense_attorney_dist, output="plots/prag_speaker_2.png")
+        defense_attorney_dist = defense_attorney.interject(last_statement_made, qud,defense_belief,smoke_s1=True)
+        helpers.plotter(defense_attorney_dist, output="plots/prag_speaker_4.png",addinfo=s1_info)
+        helpers.plot_dist(defense_attorney_dist, output="plots/prag_speaker_5.png")
 
     with TIME("l1 calculation", x=True):
         #prag listener 
         prag_listener_dist = prosecutor.L1(correction, smoke_test=True)
-        plotter(prag_listener_dist, output="plots/prag_listener_1.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(correction)+"\n- alpha = "+str(alpha))
+        plotter(prag_listener_dist, output="plots/prag_listener_4.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(correction)+"\n- alpha = "+str(alpha))
 
-        helpers.plot_dist(prag_listener_dist, output="plots/prag_listener_2.png")
+        helpers.plot_dist(prag_listener_dist, output="plots/prag_listener_5.png")

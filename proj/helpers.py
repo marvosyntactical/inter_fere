@@ -60,7 +60,7 @@ def plot_dist(d, output="plots/plot_dist.png"):
     ax.set_xticks(list(map(lambda x: x, range(1,len(data)+1))))
     ax.set_xticklabels(names,rotation=45, rotation_mode="anchor", ha="right")
 
-    plt.savefig(output, pad_inches=5)
+    plt.savefig(output, bbox_inches="tight", pad_inches=5)
 
 
 
@@ -99,7 +99,7 @@ def plotter(d, output="plots/distplot.png", addinfo=None, topk=20):
 
     #plt.tight_layout()
     if output != "show":
-        plt.savefig(output, pad_inches=5)
+        plt.savefig(output, bbox_inches="tight", pad_inches=5)
         return output
 
 
