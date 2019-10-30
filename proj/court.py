@@ -34,13 +34,9 @@ beliefs = [
         phrase([brutus, stab, caesar, forum, knife]),#
         phrase([brutus, stab, caesar, forum]),#
         phrase([brutus, stab, caesar, knife]),#
-        phrase([brutus, stab, caesar, forum, knife]),#
         phrase([brutus, stab, caesar, forum, sword]),#
-        phrase([brutus, stab, caesar, forum, knife]),#
         phrase([brutus, stab, caesar, rubicon, sword]), 
-        phrase([brutus, stab, caesar, rubicon]), 
         phrase([brutus, stab, caesar, sword]), 
-        phrase([brutus, stab, caesar, sword, rubicon]), 
         phrase([brutus, stab, caesar, rubicon, knife]), 
         phrase([brutus, stab, caesar, rubicon, sword]), 
         phrase([caesar_ag, stab, brutus_pat, forum, knife]),
@@ -68,7 +64,7 @@ quds = {
         "great": expr("great(brutus)"),
 }
 
-defense_belief = beliefs[9]
+defense_belief = beliefs[12]
 last_statement_made = beliefs[0]
 
 correction = phrase([rubicon])
@@ -78,7 +74,7 @@ alpha = 1.#finetune
 
 TIME = helpers.Timer()
 smog = False
-ext = 700 
+ext = "reverse"
 if __name__ == "__main__":
 
     defense_attorney = S(alpha, swk, beliefs, defense_belief, quds)
@@ -89,14 +85,14 @@ if __name__ == "__main__":
         l0_info =  "Lit. Listener distribution.\n\n- Correction: "+str(correction)
         lit_listener_dist = prosecutor.L0(correction)
         helpers.plotter(lit_listener_dist, output="plots/lit_listener_"+str(ext)+".png", addinfo=l0_info)
-        helpers.plot_dist(lit_listener_dist, output="plots/lit_listener_"+str(ext+1)+".png")
+        helpers.plot_dist(lit_listener_dist, output="plots/lit_listener_prop_"+str(ext)+".png")
 
     with TIME("s1 calculcation", x=True):
         #speaker
         s1_info = "Speaker distribution.\n\n- "+"Speaker event belief: "+str(beliefs[1])+"\n- "+"QUD: "+str(quds[qud])+"\n- alpha = "+str(alpha)
         defense_attorney_dist = defense_attorney.interject(last_statement_made,qud,defense_belief,smoke_s1=smog)
         helpers.plotter(defense_attorney_dist, output="plots/prag_speaker_"+str(ext)+".png",addinfo=s1_info)
-        helpers.plot_dist(defense_attorney_dist, output="plots/prag_speaker_"+str(ext+1)+".png")
+        helpers.plot_dist(defense_attorney_dist, output="plots/prag_speaker_prop_"+str(ext)+".png")
 
     with TIME("l1 calculation", x=True):
         #prag listener 
