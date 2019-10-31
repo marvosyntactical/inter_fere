@@ -1,10 +1,9 @@
 from phrasal import *
-import time
 import nltk
-import copy
-from nltk.inference import ResolutionProverCommand as rpc
-from comp_implt import *
-import helpers
+
+##### First some logic setup: nltk, phrasal
+
+#try completely different settings, phrases, etc
 
 expr = nltk.sem.Expression.fromstring
 
@@ -27,18 +26,20 @@ fun = role("gol", "fun",c)
 others = role("ass", "others",c)
 caesar_ag = role("agn", "caesar", c)
 brutus_pat = role("pat", "brutus", c)
-someone_else = role("agn", "someone_else",4*c)
+someone_else = role("agn", "someone_else",2*c)
 
+
+#the runtime of l_1 depends on len(beliefs)**2; try making this list shorter for quicker runtime!
 
 beliefs = [
-        phrase([brutus, stab, caesar, forum, knife]),#
-        phrase([brutus, stab, caesar, forum]),#
-        phrase([brutus, stab, caesar, knife]),#
-        phrase([brutus, stab, caesar, forum, sword]),#
-        phrase([brutus, stab, caesar, rubicon, sword]), 
-        phrase([brutus, stab, caesar, sword]), 
-        phrase([brutus, stab, caesar, rubicon, knife]), 
-        phrase([brutus, stab, caesar, rubicon, sword]), 
+        phrase([brutus, stab, caesar, forum, knife]),
+        phrase([brutus, stab, caesar, forum]),
+        phrase([brutus, stab, caesar, knife]),
+        phrase([brutus, stab, caesar, forum, sword]),
+        phrase([brutus, stab, caesar, rubicon, sword]),
+        phrase([brutus, stab, caesar, sword]),
+        phrase([brutus, stab, caesar, rubicon, knife]),
+        phrase([brutus, stab, caesar, rubicon, sword]),
         phrase([caesar_ag, stab, brutus_pat, forum, knife]),
         phrase([brutus, stab, caesar, rubicon, knife, fun]),
         phrase([brutus, stab, caesar, rubicon, sword, others, fun]),
@@ -64,39 +65,45 @@ quds = {
         "great": expr("great(brutus)"),
 }
 
-defense_belief = beliefs[12]
-last_statement_made = beliefs[0]
+#### Modify the below to get different distributions!
+
+from comp_implt import *
+import helpers
+import time
+
+s1_belief = beliefs[12]
+given_statement = beliefs[0]
 
 correction = phrase([rubicon])
 
 qud = "hang"
-alpha = 1.#finetune
+alpha = 1.#try different values: 1.0: normal optimality; higher settings: sharper distribution
 
 TIME = helpers.Timer()
-smog = False
-ext = "reverse"
+smoketest = True#1: calculate small utterance prior in s_1; 0: calculate full big utterance prior in s_1
+ext = "reverse"#useful plot file mnemonic
 if __name__ == "__main__":
 
-    defense_attorney = S(alpha, swk, beliefs, defense_belief, quds)
-    prosecutor = L(alpha, swk, beliefs, last_statement_made, quds)
+    s1_attorney = S(alpha, swk, beliefs, s1_belief, quds)
+    Listener = L(alpha, swk, beliefs, given_statement, quds)
 
     with TIME("l0 calculation", x=True):
         #lit listener
         l0_info =  "Lit. Listener distribution.\n\n- Correction: "+str(correction)
-        lit_listener_dist = prosecutor.L0(correction)
-        helpers.plotter(lit_listener_dist, output="plots/lit_listener_"+str(ext)+".png", addinfo=l0_info)
-        helpers.plot_dist(lit_listener_dist, output="plots/lit_listener_prop_"+str(ext)+".png")
+        l0_dist = Listener.L0(correction)
+        helpers.plotter(l0_dist, output="plots/l0_"+str(ext)+".png", addinfo=l0_info)
+        helpers.plot_dist(l0_dist, output="plots/l0_prop_"+str(ext)+".png")
 
     with TIME("s1 calculcation", x=True):
         #speaker
-        s1_info = "Speaker distribution.\n\n- "+"Speaker event belief: "+str(beliefs[1])+"\n- "+"QUD: "+str(quds[qud])+"\n- alpha = "+str(alpha)
-        defense_attorney_dist = defense_attorney.interject(last_statement_made,qud,defense_belief,smoke_s1=smog)
-        helpers.plotter(defense_attorney_dist, output="plots/prag_speaker_"+str(ext)+".png",addinfo=s1_info)
-        helpers.plot_dist(defense_attorney_dist, output="plots/prag_speaker_prop_"+str(ext)+".png")
+        s1_info = "Speaker distribution.\n\n- "+"Speaker event belief: "+str(s1_belief)+"\n- "+"QUD: "+str(quds[qud])+"\n- alpha = "+str(alpha)
+        s1_attorney_dist = s1_attorney.interject(given_statement,qud,s1_belief,smoke_s1=smoketest)
+        helpers.plotter(s1_attorney_dist, output="plots/prag_speaker_"+str(ext)+".png",addinfo=s1_info)
+        helpers.plot_dist(s1_attorney_dist, output="plots/prag_speaker_"+str(ext)+".png")
 
     with TIME("l1 calculation", x=True):
         #prag listener 
-        prag_listener_dist = prosecutor.L1(correction, smoke_test=smog)
-        plotter(prag_listener_dist, output="plots/prag_listener_4.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(correction)+"\n- alpha = "+str(alpha))
+        l1_dist = Listener.L1(correction, smoke_test=smoketest)
+        helpers.plotter(l1_dist, output="plots/prag_listener_4.png", addinfo="Prag. Listener distribution.\n\n- "+"Correction: "+str(correction)+"\n- alpha = "+str(alpha))
 
-        helpers.plot_dist(prag_listener_dist, output="plots/prag_listener_5.png")
+        helpers.plot_dist(prag_listener_dist, output="plots/prag_listener_"+str(ext)+".png")

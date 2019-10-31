@@ -33,7 +33,7 @@ class L:
         self.s1_alpha = s1_alpha
         self.swk = swk #shared world knowledge, list of expr
         self.B = B#belief set of speaker (for construction of belief prior)
-        self.belief = belief#self.belief == last_statement_made == given_full_belief 
+        self.belief = belief#self.belief == last_statement_made == given_statement 
         self.QUDs = QUDs
 
     @Marginal
@@ -110,20 +110,13 @@ class S:
         self.qudSelf = None
 
     @timid
-    def utterance_prior(self,given_full_belief, smoke_utt=False):
+    def utterance_prior(self,given_statement, smoke_utt=False):
         """
-        not actually a function of own belief
-
-        My utterance prior is a function of speaker state/belief and given belief
-        This is unlike in other RSA examples and a more general but far costlier to calculate prior
-        should be put in place here
-        Fixing this:
-            utterance prior depends only on belief set; becomes large tho
-        #TODO this method is a MESS
+        constructs uniform utterance prior over all utterance combinations as described in the paper
         """
 
         possible_changers = set()
-        given_assigned = set(given_full_belief.assed.keys())
+        given_assigned = set(given_statement.assed.keys())
 
         if smoke_utt:
             possible_changers = [\
@@ -133,6 +126,9 @@ class S:
                     phrase([NULL_Utt()])]
         else:
             for belief in self.B:
+                if smoke_utt:
+                    if belief != self.belief:
+                        continue
                 assigned = set(belief.assed.keys())
                 if assigned == {"NULL"}: #first leave out NULL utterances
                     possible_changers.add(belief)
@@ -141,7 +137,7 @@ class S:
                 for rol in assigned:
                     if rol not in given_assigned:
                         diff_roles.append(rol)
-                    elif belief.assed[rol] != given_full_belief.assed[rol]:
+                    elif belief.assed[rol] != given_statement.assed[rol]:
                         diff_roles.append(rol)
 
                 diff = [] #collect differing constituents together
@@ -159,14 +155,13 @@ class S:
 
         changerLogits = -torch.tensor([phr.cost for phr in possible_changers], dtype=torch.float32)
         ix = pyro.sample("utterance",dist.Categorical(logits=changerLogits))
-        print(ix, len(possible_changers))
-        r = possible_changers[ix.item()]
-        return r
+
+        return possible_changers[ix]
 
     @Marginal
-    def interject(self, given_full_belief, qud, own_belief, smoke_s1=False):
+    def interject(self, given_statement, qud, own_belief, smoke_s1=False):
         """
-        XXX interject temporarily receives self belief as arg
+
         Speaker decides wether to make a correction by inferring literal listener interpretation
         based on own question under discussion value
         and the opposing side's statement
@@ -175,23 +170,23 @@ class S:
         """
 
         print("~"*20+"Speaker interject"+"~"*20+"\n")
-        print("\ndebug: speaker initialized")
+        print("\n: speaker initialized")
         print("qud: "+ qud)
         print("meaning: ", self.QUDs[qud])
-        print("\ndebug: self.belief.L(): ", self.belief.L())
-        print("\ndebug: given_full_belief: ", given_full_belief.L())
-        print("\ndebug: self.swk: ", self.swk)
+        print("\n: self.belief.L(): ", self.belief.L())
+        print("\n: given_statement: ", given_statement.L())
+        print("\n: self.swk: ", self.swk)
 
         self.qudSelf = rpc(goal=self.QUDs[qud], assumptions=self.swk+[own_belief.L()]).prove()
 
 
         with poutine.scale(scale=torch.tensor(float(self.alpha))):
-            utterance = self.utterance_prior(given_full_belief, smoke_utt=smoke_s1)
+            utterance = self.utterance_prior(given_statement, smoke_utt=smoke_s1)
             print("interject utterance prior: ", utterance)
             assert utterance != None
 
             #Construct Listener in head
-            listener = L(self.alpha, self.swk, self.B, given_full_belief, self.QUDs)
+            listener = L(self.alpha, self.swk, self.B, given_statement, self.QUDs)
             literal_marginal = listener.L0(utterance)
             projected_literal = self.project(literal_marginal, qud)
             print("projected_literal: ", projected_literal)
