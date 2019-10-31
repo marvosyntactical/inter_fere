@@ -1,7 +1,21 @@
 
 
-# Pragmatic Modelling of Ellipses Using First Order Logic Semantic Representations
+# Probabilistic Pragmatic Modelling of Elliptical Corrections Using First Order Logic Semantic Representations
 
+Execution: python3 court.py
+Modification: edit court.py
+
+search_inference.py, HashingMarginal and inspiration taken directly from [official pyro github examples](https://github.com/pyro-ppl/pyro/tree/dev/examples/rsa)
+
+##### Dependencies
+- nltk  
+- nltk external prover command (e.g. ResolutionProverCommand)  
+
+- torch  
+- pyro  
+- matplotlib  
+
+- time and RAM  
 
 The below is taken from the [official pyro github examples](https://github.com/pyro-ppl/pyro/tree/dev/examples/rsa)
 
