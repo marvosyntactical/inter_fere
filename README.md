@@ -2,6 +2,8 @@
 
 # Probabilistic Pragmatic Modelling of Elliptical Corrections Using First Order Logic Semantic Representations
 
+For the project report see the pdf with the full title in the files above
+
 Execution: python3 court.py
 Modification: edit court.py
 
