@@ -31,9 +31,6 @@ def memoize(fn=None, **kwargs):
         return lambda _fn: memoize(_fn, **kwargs)
     return functools.lru_cache(**kwargs)(fn)
 
-
-
-
 def factor(name, value):
     """
     Like factor in webPPL, adds a scalar weight to the log-probability of the trace

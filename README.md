@@ -2,12 +2,11 @@
 
 # Probabilistic Pragmatic Modelling of Elliptical Corrections Using First Order Logic Semantic Representations
 
-For the project report see the pdf with the full title in the files above
+For the project report see the file report.pdf.
 
-Execution: python3 court.py
-Modification: edit court.py
+Execution: `cd code && python3 court.py`
 
-search_inference.py, HashingMarginal and inspiration taken directly from [official pyro github examples](https://github.com/pyro-ppl/pyro/tree/dev/examples/rsa)
+search\_inference.py, HashingMarginal and inspiration taken directly from [official pyro github examples](https://github.com/pyro-ppl/pyro/tree/dev/examples/rsa)
 
 ##### Dependencies
 - nltk  
